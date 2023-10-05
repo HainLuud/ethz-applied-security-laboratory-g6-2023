@@ -1,0 +1,4 @@
+flask
+pyopenssl
+requests
+cryptography
