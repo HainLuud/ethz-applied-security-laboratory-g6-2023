@@ -11,9 +11,6 @@ ca = CA()
 def hello():
     return 'Welcome to the CA interface'
 
-if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=8000)
-
 @app.route('/issue_certificate', methods=['POST'])
 def issue_certificate():
     try:
@@ -57,3 +54,7 @@ def get_ca_status():
     
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host='0.0.0.0')
