@@ -9,7 +9,7 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 import datetime
-from os import urandom, path
+from os import urandom, path, makedirs
 from logger import Logger
 from user import User
 from OpenSSL.crypto import PKCS12, FILETYPE_PEM, load_certificate, load_privatekey 
@@ -31,6 +31,7 @@ class CA:
     crl_path = '../data/ca/crl.pem'
 
     def __init__(self):
+        self.create_directories()
         self.logger = Logger()
         self.revocation_list = []
         self.serial_id = self.get_serial_id()
@@ -38,6 +39,12 @@ class CA:
         self.create_keypair()
         self.generate_root_certificate()
         self.create_crl()
+
+    def create_directories(self):
+        directories = ['../data', '../data/ca', '../data/clients']
+        for directory in directories:
+            if not path.exists(directory): 
+                makedirs(directory) 
 
     def get_serial_id(self):
         if not path.exists(self.serial_id_path):
