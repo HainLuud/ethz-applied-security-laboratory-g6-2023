@@ -19,6 +19,7 @@ PEM = Encoding.PEM
 PKCS8 = PrivateFormat.PKCS8
 SubjectPublicKeyInfo = PublicFormat.SubjectPublicKeyInfo
 TraditionalOpenSSL = PrivateFormat.TraditionalOpenSSL
+
 class CA:
     EXPONENT = 65537
     BITS = 2048
@@ -169,9 +170,6 @@ class CA:
         
         self.logger.success("Generated new client certificate ...")
 
-        c = self.load(f'../data/clients/{2}_cert.pem', "rb")
-        print(c.decode())
-
         return client_cert
     
     def create_crl(self):
@@ -203,28 +201,37 @@ class CA:
         for entry in crl:
             crl_builder = crl_builder.add_revoked_certificate(entry)
 
+        
         for serial_id in serial_id_list:
-            # load user certificate
-            user_cert_file = f"../data/clients/{serial_id}_cert.pem"
-            user_cert_data = self.load(user_cert_file, "rb")
-            user_cert = x509.load_pem_x509_certificate(user_cert_data)
-            
-            revoked = crl.get_revoked_certificate_by_serial_number(serial_id)
-            
-            if  not isinstance(revoked, x509.RevokedCertificate):
-                # Create a revoked certificate entry
-                revoked_cert = x509.RevokedCertificateBuilder().serial_number(user_cert.serial_number) \
-                                                            .revocation_date(t_now) \
-                                                            .add_extension(x509.CRLReason(reason), critical=False) \
-                                                            .build(default_backend())
+            try:
+                # load user certificate
+                user_cert_file = f"../data/clients/{serial_id}_cert.pem"
+                user_cert_data = self.load(user_cert_file, "rb")
+                user_cert = x509.load_pem_x509_certificate(user_cert_data)
+                try:
+                    reason_flag = x509.ReasonFlags[reason.lower()]
+                except Exception:
+                    reason_flag = x509.ReasonFlags.unspecified
 
-                crl_builder = crl_builder.add_revoked_certificate(revoked_cert)
-            
+                revoked = crl.get_revoked_certificate_by_serial_number(serial_id)
+                
+                if not isinstance(revoked, x509.RevokedCertificate):
+                    # Create a revoked certificate entry
+                    revoked_cert = x509.RevokedCertificateBuilder().serial_number(user_cert.serial_number) \
+                                                                .revocation_date(t_now) \
+                                                                .add_extension(x509.CRLReason(reason_flag), critical=False) \
+                                                                .build(default_backend())
+
+                    crl_builder = crl_builder.add_revoked_certificate(revoked_cert)
+                else:
+                    raise FileExistsError(f'Certificate with serial id {serial_id} has already been revoked.')
+            except FileNotFoundError:
+                raise FileNotFoundError(f'Certificate with serial id {serial_id} does not exist.')
+
         private_key = self.load_encrypted_private_key()
         new_crl = crl_builder.sign(private_key=private_key, algorithm=hashes.SHA256())
 
         self.store(self.crl_path, "wb", new_crl.public_bytes(encoding=PEM))
-        print(new_crl.public_bytes(encoding=PEM).decode())
 
     
     def get_status(self):
@@ -247,18 +254,3 @@ class CA:
         with open(path, mode) as f:
             content = f.read()
             return content
-        
-'''
------BEGIN X509 CRL-----
-MIIByTCBsgIBATANBgkqhkiG9w0BAQsFADBcMQswCQYDVQQGEwJDSDEPMA0GA1UE
-CAwGWnVyaWNoMRAwDgYDVQQHDAdaZW50cnVtMRAwDgYDVQQKDAdpTW92aWVzMRgw
-FgYDVQQDDA9yb290Lmltb3ZpZXMuY2gXDTIzMTAwNjE3MTMxNVoXDTIzMTAwNzE3
-MTMxNVowIjAgAgECFw0yMzEwMDYxNzEzMTVaMAwwCgYDVR0VBAMKAQEwDQYJKoZI
-hvcNAQELBQADggEBAIw/4nRsm8RAqcflW4bjqKlPNL9Xa1fTnob+xuj0Tp8YMoxo
-9p42Zsz+BIM/DZLgUw/bt1DfvidQlqN43Xi0MOcmmWAK+qk4UPQX0mu+6VYIMlBc
-WYPN/OUOM49n2S0SEmn/PzFDrwN3EhOZYlERUWUAPbMnfb9+juNlkcMDikauHIhs
-dKEKGc6l0WwIMnL935XrPJNW0vVuz3vYOw+TPOwJhVmuQ6z6RV1dpwXc7zqi3ix+
-w8gjBZ0XwhU5DYzuKCJMEHtqwkdCYClR8NDOt+chYm/Yl3TiQbDe3ms0ZYKfLkM9
-cr/pZo9dtkaE8Rlt/nm4KHF6CKPWltZG8caTWZ8=
------END X509 CRL-----
-'''

@@ -35,7 +35,6 @@ WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,source=requirements.txt,target=requirements.txt \
     python -m pip install -r requirements.txt
-#RUN chown -R appuser /app/src/data
 
 # Switch to the non-privileged user to run the application.
 #USER appuser
@@ -47,4 +46,4 @@ COPY . .
 EXPOSE 8000
 
 # Run the application.
-CMD cd src &&  python main.py
+CMD cd src && python unit_tests.py && python ca_api.py
