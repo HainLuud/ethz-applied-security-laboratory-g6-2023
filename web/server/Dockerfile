@@ -5,6 +5,17 @@
 # https://docs.docker.com/engine/reference/builder/
 
 ARG PYTHON_VERSION=3.11.5
+
+FROM node:latest as build
+
+WORKDIR /app
+
+COPY . .
+
+RUN npm ci
+
+RUN npx tailwindcss -i ./src/css/main.css -o ./static/css/main.css
+
 FROM python:${PYTHON_VERSION}-slim as base
 
 # Prevents Python from writing pyc files.
@@ -41,6 +52,8 @@ USER appuser
 
 # Copy the source code into the container.
 COPY . .
+
+COPY --from=build /app/static /app/static
 
 # Expose the port that the application listens on.
 EXPOSE 8000
