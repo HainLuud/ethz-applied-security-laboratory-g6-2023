@@ -2,8 +2,9 @@
 {% set active_page = "login" %}
 {% block title %}Login{% endblock %}
 {% block content %}
-  <h1>Login by credentials</h1>
+  <h1>Login</h1>
   <div>
+    <h2>Credentials</h2>
     <form id="credentials-form" method="POST" action="{{ url_for('post_login') }}">
       <div>
         <label for="uid">User ID</label>
@@ -15,6 +16,15 @@
       </div>
       <input type="hidden" id="credentials-next" name="next" value="{{ request.args.get('next', '') }}">
       <button type="submit" id="credentials-submit">Login</button>
+    </form>
+  </div>
+  <div>
+    <h2>Certificate</h2>
+    <form id="credentials-form" method="GET" action="{{ url_for('get_login_cert') }}">
+      {% if not has_cert %}
+        <p>You must first install a certificate.</p>
+      {% endif %}
+      <button type="submit" id="credentials-submit" {% if not has_cert %}disabled{% endif %}>Login</button>
     </form>
   </div>
 {% endblock %}

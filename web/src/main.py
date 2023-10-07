@@ -4,9 +4,13 @@ import base64
 import hashlib
 import io
 import os
+import re
+import sys
 import traceback
 from functools import wraps
 
+from cryptography import x509
+from cryptography.x509.oid import NameOID
 import requests
 from flask import (Flask, flash, g, redirect, render_template, request,
                    send_file, session, url_for)
@@ -101,9 +105,11 @@ def index():
 @app.get('/login')
 def get_login():
     next = request.args.get('next')
+    has_cert = 'HTTP_X_SSL_CERT' in request.environ
+    print("Environment",request.environ, file=sys.stderr)
     if not next:
         return redirect(url_for('get_login', next=url_for('index')))
-    return render_template('login.html', next=next)
+    return render_template('login.html', next=next, has_cert=has_cert)
 
 
 @app.post('/login')
@@ -113,7 +119,7 @@ def post_login():
     next = request.form.get('next', url_for('index'))
 
     if not uid or not pwd:
-        flash('Wrong user ID or password.', 'warning')
+        flash('You must provide user ID and password.', 'warning')
         return redirect(url_for('get_login', next=next))
 
     user = db.session.get(User, uid)
@@ -124,6 +130,34 @@ def post_login():
 
     flash('Successful login.', 'warning')
     session['uid'] = user.uid
+    return redirect(next)
+
+
+@app.get('/login_cert')
+def get_login_cert():
+    next = request.form.get('next', url_for('index'))
+    cert_data = request.environ.get('HTTP_X_SSL_CERT')
+
+    if not cert_data:
+        flash('You must provide a certificate.', 'warning')
+        return redirect(url_for('get_login', next=next))
+
+    cert = x509.load_pem_x509_certificate(cert_data.encode())
+    try:
+        commonname = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+    except:
+        flash('Certificate processing error.', 'warning')
+        return redirect(url_for('get_login', next=next))
+
+    match = re.search(r'(?P<uid>.*)\.imovies\.ch', commonname)
+    if not match:
+        flash('Wrong certificate.', 'warning')
+        return redirect(url_for('get_login', next=next))
+
+    uid = match.group('uid')
+
+    flash('Successful login.', 'warning')
+    session['uid'] = uid
     return redirect(next)
 
 

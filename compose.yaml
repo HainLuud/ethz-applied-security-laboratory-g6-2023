@@ -25,6 +25,15 @@ services:
         condition: service_started
       db-db:
         condition: service_healthy
+  web-nginx:
+    extends:
+      file: web/compose.yaml
+      service: nginx
+    networks:
+      - backend
+    depends_on:
+      web-server:
+        condition: service_started
 networks:
   backend:
 volumes:

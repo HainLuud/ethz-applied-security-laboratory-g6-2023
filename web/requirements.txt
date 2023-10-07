@@ -1,5 +1,6 @@
 Flask
 Flask-SQLAlchemy
+cryptography
 gunicorn
 mysql-connector-python
 requests
