@@ -227,7 +227,7 @@ def post_profile(uid):
     if email:
         user.email = email
     if pwd:
-        user.pwd = user.hash_pwd(pwd)
+        user.pwd = hash_pwd(pwd)
 
     db.session.commit()
 
@@ -262,7 +262,7 @@ def post_issue(uid):
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
-        certificate = base64.b64decode(data['certificate'])
+        certificate = base64.b64decode(data['certificate'].encode())
         return send_file(io.BytesIO(certificate), download_name='cert.p12', mimetype='application/x-pkcs12')
     except Exception:
         traceback.print_exc()

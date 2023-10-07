@@ -30,9 +30,9 @@ class CA:
     BITS = 2048
 
     # hard-coded file paths
-    root_certificate_path = '../data/ca/cert.pem'
-    pub_key_path = '../data/ca/pub.pem'
-    priv_key_path = '../data/ca/priv.pem'
+    root_certificate_path = '../data/ca/rootCACert.pem'
+    #pub_key_path = '../data/ca/pub.pem'
+    priv_key_path = '../data/ca/rootCAKey.pem'
     serial_id_path = '../data/ca/serial_id.txt'
     crl_path = '../data/ca/crl.pem'
 
@@ -42,8 +42,10 @@ class CA:
         self.revocation_list = []
         self.serial_id = self.get_initial_serial_id()
         self.private_key_password = urandom(64) # TODO: how to store passphrase securely
-        self.create_keypair()
-        self.generate_root_certificate()
+        #self.create_keypair()
+        #self.generate_root_certificate()
+        # TODO: read key pair and certificate
+        self.read_cert()
         self.create_crl()
 
     '''
@@ -89,7 +91,7 @@ class CA:
 
         # write serialised keys to files
         self.store(self.priv_key_path, 'wb+', encrypted_pem_private_key)
-        self.store(self.pub_key_path, 'wb+', pem_public_key)
+        #self.store(self.pub_key_path, 'wb+', pem_public_key)
     
     '''
     Loads the private key of the CA from the file.
@@ -99,13 +101,27 @@ class CA:
         encrypted_pem_private_key = self.load(self.priv_key_path, 'rb')
         
         # Deserialize and decrypt the private key
-        private_key = load_pem_private_key(encrypted_pem_private_key, password=self.private_key_password,)
+        private_key = load_pem_private_key(data=encrypted_pem_private_key, password=None, backend=default_backend())
         return private_key
 
+    def read_cert(self):
+        self.root_cert_pem = self.load(self.root_certificate_path, 'rb')
+        self.root_cert = x509.load_pem_x509_certificate(self.root_cert_pem, default_backend())
+        
     '''
     Generates the root certificate.
     '''
     def generate_root_certificate(self):
+        
+        # Check if the root certificate already exists
+        if path.exists(self.root_certificate_path):
+            self.logger.debug("Root certificate already exists. Loading it.")
+
+            self.root_cert_pem = self.load(self.root_certificate_path, "rb")
+            self.root_cert = x509.load_pem_x509_certificate(self.root_cert_pem, default_backend())
+            return
+
+
         self.logger.debug("Generating new certificate ...")
         self.root_subject = self.root_issuer = x509.Name([
             x509.NameAttribute(NameOID.COUNTRY_NAME, u"CH"),
@@ -165,6 +181,7 @@ class CA:
             x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"Zurich"),
             x509.NameAttribute(NameOID.LOCALITY_NAME, u"Zentrum"),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"iMovies"),
+            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, u"iMovies"),
             x509.NameAttribute(NameOID.COMMON_NAME, f"{user.uid}.imovies.ch"), 
             x509.NameAttribute(NameOID.EMAIL_ADDRESS, user.email),
             x509.NameAttribute(NameOID.SURNAME, user.lastname),
@@ -186,7 +203,7 @@ class CA:
         private_key = self.load_encrypted_private_key()
         subject_key_id = x509.SubjectKeyIdentifier.from_public_key(private_key.public_key())
         cert = x509.CertificateBuilder().subject_name(subject) \
-                                        .issuer_name(self.root_subject) \
+                                        .issuer_name(self.root_cert.issuer) \
                                         .public_key(client_private_key.public_key()) \
                                         .serial_number(self.serial_id) \
                                         .not_valid_before(datetime.datetime.utcnow()) \
@@ -204,6 +221,7 @@ class CA:
         self.store(f'{client_directory}/{self.serial_id}_cert.pem', "wb+", cert.public_bytes(encoding=PEM))
         self.update_serial_id()
         
+        # TODO: why is downloaded cert corrupted!
         pkcs12 = PKCS12()
         pkcs12.set_certificate(load_certificate(type=FILETYPE_PEM, buffer=cert_pem))
         pkcs12.set_privatekey(load_privatekey(type=FILETYPE_PEM, buffer=pem_client_private_key))
@@ -260,8 +278,7 @@ class CA:
             certs.sort(key=extract_serial_id, reverse=True)
             return certs
         except FileNotFoundError:
-            raise FileNotFoundError(f'User {uid} does not exist.')
-    
+            return []
     '''
     Generates a certificate revocation list.
     '''
