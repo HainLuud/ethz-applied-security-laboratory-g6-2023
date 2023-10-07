@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set active_page = "profile" %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+  <h1>Profile</h1>
+  <div>
+    <form id="profile-form" method="POST" action="{{ url_for('post_profile', uid=user.uid) }}">
+      <div>
+        <label for="uid">User ID</label>
+        <input type="text" id="uid" name="uid" value="{{ user.uid }}" disabled>
+      </div>
+      <div>
+        <label for="lastname">Last name</label>
+        <input type="text" id="lastname" name="lastname" value="{{ user.lastname }}">
+      </div>
+      <div>
+        <label for="firstname">First name</label>
+        <input type="text" id="firstname" name="firstname" value="{{ user.firstname }}">
+      </div>
+      <div>
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email" value="{{ user.email }}">
+      </div>
+      <div>
+        <label for="pwd">Password</label>
+        <input type="text" id="pwd" name="pwd">
+      </div>
+      <div>
+        <label for="pwd2">Confirm password</label>
+        <input type="text" id="pwd2" name="pwd2">
+      </div>
+      <button type="submit" id="profile-submit">Save</button>
+    </form>
+  </div>
+
+  <div>
+    <form id="issue-form" method="POST" action="{{ url_for('post_issue', uid=user.uid)|urlencode }}">
+      <div>
+        <label for="passphrase">Passphrase</label>
+        <input type="password" id="passphrase" name="passphrase">
+      </div>
+      <button type="submit" id="issue-submit">Issue Certificate</button>
+    </form>
+  </div>
+{% endblock %}

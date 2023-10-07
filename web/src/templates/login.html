@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% set active_page = "login" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+  <h1>Login by credentials</h1>
+  <div>
+    <form id="credentials-form" method="POST" action="{{ url_for('post_login') }}">
+      <div>
+        <label for="uid">User ID</label>
+        <input type="text" id="uid" name="uid" required>
+      </div>
+      <div>
+        <label for="pwd">Password</label>
+        <input type="pwd" id="pwd" name="pwd" required>
+      </div>
+      <input type="hidden" id="credentials-next" name="next" value="{{ request.args.get('next', '') }}">
+      <button type="submit" id="credentials-submit">Login</button>
+    </form>
+  </div>
+{% endblock %}

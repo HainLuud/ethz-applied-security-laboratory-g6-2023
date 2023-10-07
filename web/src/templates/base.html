@@ -1,0 +1,41 @@
+{% set navigation_bar = [
+  (url_for('index'), 'index', 'Home'),
+  (url_for('get_profile'), 'profile', 'Profile'),
+  (url_for('get_admin'), 'admin', 'Administration'),
+  (url_for('get_logout'), 'logout', 'Log out'),
+] -%}
+<!doctype html>
+<html lang="en">
+<head>
+  {% block head %}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <title>CA - {% block title %}{% endblock %}</title>
+  {% endblock %}
+</head>
+<body>
+  <div class="header clearfix">
+    <nav>
+      <ul class="nav">
+        {% for href, id, caption in navigation_bar %}
+          <li><a href="{{ href|urlencode }}" {% if id == active_page %}aria-current="page"{% endif %}>{{ caption }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+  </div>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div>
+        <ul class=flashes>
+          {% for message in messages %}
+            <p style="color: red;">{{ message }}</p>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  {% endwith %}
+  <div id="content">{% block content %}{% endblock %}</div>
+</body>
+</html>
