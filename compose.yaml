@@ -16,7 +16,7 @@ services:
       file: web/compose.yaml
       service: server
     environment:
-      - DATABASE_HOST=db-db
+      - DATABASE_HOST=db-db:3306
       - CA_HOST=ca-server:8000
     networks:
       - backend
