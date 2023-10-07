@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import base64
 import hashlib
 import io
@@ -294,4 +296,4 @@ with app.app_context():
     create_admin()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0', port=8000)

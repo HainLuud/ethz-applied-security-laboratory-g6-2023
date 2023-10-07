@@ -17,7 +17,7 @@ services:
       service: server
     environment:
       - DATABASE_HOST=db-db
-      - CA_HOST=ca-server:5000
+      - CA_HOST=ca-server:8000
     networks:
       - backend
     depends_on:
