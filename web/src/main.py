@@ -107,7 +107,7 @@ def index():
 @login_required
 def get_crl():
     try:
-        response = requests.get(f'http://{CA_HOST}/crl')
+        response = requests.get(f'https://{CA_HOST}/crl', verify=False)
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -123,7 +123,6 @@ def get_crl():
 def get_login():
     next = request.args.get('next')
     has_cert = 'HTTP_X_SSL_CERT' in request.environ
-    print("Environment",request.environ, file=sys.stderr)
     if not next:
         return redirect(url_for('get_login', next=url_for('index')))
     return render_template('login.html', next=next, has_cert=has_cert)
@@ -175,7 +174,7 @@ def get_login_cert():
     serial_id = cert.serial_number
 
     try:
-        response = requests.get(f'http://{CA_HOST}/user_certificates/{uid}/{serial_id}')
+        response = requests.get(f'https://{CA_HOST}/user_certificates/{uid}/{serial_id}', verify=False)
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -212,7 +211,7 @@ def get_profile(uid):
         return redirect(url_for('index'))
 
     try:
-        response = requests.get(f'http://{CA_HOST}/user_certificates/{user.uid}')
+        response = requests.get(f'https://{CA_HOST}/user_certificates/{user.uid}', verify=False)
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -290,7 +289,7 @@ def post_issue(uid):
             'email': user.email,
             'passphrase': passphrase,
         }
-        response = requests.post(f'http://{CA_HOST}/issue_certificate', json=json)
+        response = requests.post(f'https://{CA_HOST}/issue_certificate', json=json, verify=False)
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -322,7 +321,7 @@ def post_revoke(uid):
             'uid': user.uid,
             'serial_id_list': serial_id_list,
         }
-        response = requests.post(f'http://{CA_HOST}/revoke_certificate', json=json)
+        response = requests.post(f'https://{CA_HOST}/revoke_certificate', json=json, verify=False)
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -338,7 +337,7 @@ def post_revoke(uid):
 @admin_required
 def get_admin():
     try:
-        response = requests.get(f'http://{CA_HOST}/ca_status')
+        response = requests.get(f'https://{CA_HOST}/ca_status', verify=False)
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
