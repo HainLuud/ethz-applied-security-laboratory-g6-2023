@@ -33,6 +33,43 @@
     </form>
   </div>
 
+  {% if certificates is not none %}
+    <div>
+      {% if certificates|length %}
+        <table>
+          <thead>
+            <tr>
+              <th>Serial number</th>
+              <th>First name</th>
+              <th>Last name</th>
+              <th>Email address</th>
+              <th>Common name</th>
+              <th>Not valid before</th>
+              <th>Not valid after</th>
+              <th>Revoked</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for certificate in certificates %}
+              <tr>
+                <td>{{ certificate.serial_id }}</td>
+                <td>{{ certificate.firstname }}</td>
+                <td>{{ certificate.lastname }}</td>
+                <td>{{ certificate.email }}</td>
+                <td>{{ certificate.commonname }}</td>
+                <td>{{ certificate.notvalidbefore }}</td>
+                <td>{{ certificate.notvalidafter }}</td>
+                <td>{{ certificate.revoked }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>No certificates issued.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+
   <div>
     <form id="issue-form" method="POST" action="{{ url_for('post_issue', uid=user.uid)|urlencode }}">
       <div>

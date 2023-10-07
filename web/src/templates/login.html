@@ -11,7 +11,7 @@
       </div>
       <div>
         <label for="pwd">Password</label>
-        <input type="pwd" id="pwd" name="pwd" required>
+        <input type="password" id="pwd" name="pwd" required>
       </div>
       <input type="hidden" id="credentials-next" name="next" value="{{ request.args.get('next', '') }}">
       <button type="submit" id="credentials-submit">Login</button>
