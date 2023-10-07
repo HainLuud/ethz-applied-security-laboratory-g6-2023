@@ -1,4 +1,12 @@
-from flask import Flask, jsonify, request, make_response
+'''
+Certificate Authority - API
+Authors: 
+- Patrick Aldover (paldover@student.ethz.ch)
+- Damiano Amatruda (damatruda@student.ethz.ch)
+- Alessandro Cabodi (acabodi@student.ethz.ch)
+- Hain Luud (haluud@student.ethz.ch)
+'''
+from flask import Flask, jsonify, request
 import base64
 from ca import CA
 from user import User
@@ -31,14 +39,25 @@ def issue_certificate():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
 
+@app.route('/user_certificates/<uid>', methods=['GET'])
+def user_certificates(uid):
+    try:
+        certificates = ca.user_certificates(uid)
+
+        return jsonify({"status": "success", "certificates": certificates})
+    
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
 @app.route('/revoke_certificate', methods=['POST'])
 def revoke_certificate():
     try:
         data = request.json
+        uid = data['uid']
         serial_id_list = data['serial_id_list']
         reason = data.get('reason', "unspecified")
         
-        ca.revoke_certificate(serial_id_list, reason)
+        ca.revoke_certificate(uid, serial_id_list, reason)
         
         return jsonify({"status": "success"})
     

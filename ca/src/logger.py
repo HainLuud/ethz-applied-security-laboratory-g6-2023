@@ -1,6 +1,10 @@
 '''
 Logger (Remove once log server exists)
-Authors: Patrick Louis Aldover
+Authors: 
+- Patrick Aldover (paldover@student.ethz.ch)
+- Damiano Amatruda (damatruda@student.ethz.ch)
+- Alessandro Cabodi (acabodi@student.ethz.ch)
+- Hain Luud (haluud@student.ethz.ch)
 '''
 class Logger:
     def __init__(self):

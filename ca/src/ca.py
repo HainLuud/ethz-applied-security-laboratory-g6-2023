@@ -1,6 +1,10 @@
 '''
 Certificate Authority
-Authors: Patrick Louis Aldover, Alessandro Cabodi
+Authors: 
+- Patrick Aldover (paldover@student.ethz.ch)
+- Damiano Amatruda (damatruda@student.ethz.ch)
+- Alessandro Cabodi (acabodi@student.ethz.ch)
+- Hain Luud (haluud@student.ethz.ch)
 '''
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, PublicFormat, NoEncryption, BestAvailableEncryption, load_pem_private_key
@@ -9,7 +13,7 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 import datetime
-from os import urandom, path, makedirs
+from os import urandom, path, makedirs, listdir
 from logger import Logger
 from user import User
 from OpenSSL.crypto import PKCS12, FILETYPE_PEM, load_certificate, load_privatekey 
@@ -21,9 +25,11 @@ SubjectPublicKeyInfo = PublicFormat.SubjectPublicKeyInfo
 TraditionalOpenSSL = PrivateFormat.TraditionalOpenSSL
 
 class CA:
+    # cryptography
     EXPONENT = 65537
     BITS = 2048
 
+    # hard-coded file paths
     root_certificate_path = '../data/ca/cert.pem'
     pub_key_path = '../data/ca/pub.pem'
     priv_key_path = '../data/ca/priv.pem'
@@ -34,29 +40,41 @@ class CA:
         self.create_directories()
         self.logger = Logger()
         self.revocation_list = []
-        self.serial_id = self.get_serial_id()
+        self.serial_id = self.get_initial_serial_id()
         self.private_key_password = urandom(64) # TODO: how to store passphrase securely
         self.create_keypair()
         self.generate_root_certificate()
         self.create_crl()
 
+    '''
+    Creates directories on startup in case they do not exist.
+    '''
     def create_directories(self):
         directories = ['../data', '../data/ca', '../data/clients']
         for directory in directories:
             if not path.exists(directory): 
                 makedirs(directory) 
 
-    def get_serial_id(self):
+    '''
+    Returns the initial serial id.
+    '''
+    def get_initial_serial_id(self):
         if not path.exists(self.serial_id_path):
-            return 1#x509.random_serial_number() 
+            return 1 #x509.random_serial_number() 
         else:
             serial_id = self.load(self.serial_id_path, 'r')
             return int(serial_id)
     
+    '''
+    Updates serial id.
+    '''
     def update_serial_id(self):
         self.serial_id += 1
         self.store(self.serial_id_path, 'w+', str(self.serial_id))
-        
+    
+    '''
+    Generates a new key pair for the CA.
+    '''
     def create_keypair(self):
         self.logger.debug("Generating new key pair ...")
         private_key = rsa.generate_private_key(public_exponent=self.EXPONENT, key_size=self.BITS)
@@ -73,6 +91,9 @@ class CA:
         self.store(self.priv_key_path, 'wb+', encrypted_pem_private_key)
         self.store(self.pub_key_path, 'wb+', pem_public_key)
     
+    '''
+    Loads the private key of the CA from the file.
+    '''
     def load_encrypted_private_key(self):
         # Read the encrypted private key from the file
         encrypted_pem_private_key = self.load(self.priv_key_path, 'rb')
@@ -81,6 +102,9 @@ class CA:
         private_key = load_pem_private_key(encrypted_pem_private_key, password=self.private_key_password,)
         return private_key
 
+    '''
+    Generates the root certificate.
+    '''
     def generate_root_certificate(self):
         self.logger.debug("Generating new certificate ...")
         self.root_subject = self.root_issuer = x509.Name([
@@ -119,7 +143,15 @@ class CA:
         self.update_serial_id()
     
     # TODO: new certificate: revoke old certificate
-    def issue_certificate(self, user: User, passphrase):
+    '''
+    Issues a new certificate for a user.
+    ----------
+    user : User
+        The user.
+    passphrase : bytes | None
+        The passphrase to export the PKCS12 file.
+    '''
+    def issue_certificate(self, user: User, passphrase : bytes | None):
         self.logger.debug("Generating new client key pair ...")
         # create user key pair 
         client_private_key = rsa.generate_private_key(public_exponent=self.EXPONENT, key_size=self.BITS, )
@@ -166,7 +198,10 @@ class CA:
         
         cert_pem = cert.public_bytes(PEM)
         
-        self.store(f'../data/clients/{self.serial_id}_cert.pem', "wb+", cert.public_bytes(encoding=PEM))
+        client_directory = f'../data/clients/{user.uid}'
+        if not path.exists(client_directory): 
+            makedirs(client_directory) 
+        self.store(f'{client_directory}/{self.serial_id}_cert.pem', "wb+", cert.public_bytes(encoding=PEM))
         self.update_serial_id()
         
         pkcs12 = PKCS12()
@@ -174,11 +209,62 @@ class CA:
         pkcs12.set_privatekey(load_privatekey(type=FILETYPE_PEM, buffer=pem_client_private_key))
         pkcs12.set_ca_certificates([load_certificate(type=FILETYPE_PEM, buffer=self.root_cert_pem)])
         client_cert = pkcs12.export(passphrase=passphrase)
-        
+
         self.logger.success("Generated new client certificate ...")
 
         return client_cert
     
+    '''
+    Returns a list of certificate information of a user.
+    ----------
+    uid : str
+        The user id.
+    '''
+    def user_certificates(self, uid : str):
+        try:
+            # load certificate revocation list
+            crl_data = self.load(self.crl_path, "rb")
+            crl = x509.load_pem_x509_crl(crl_data)
+
+            client_directory = f'../data/clients/{uid}'
+            files = listdir(client_directory)
+            certs = []
+            for file in files:
+                cert_pem = self.load(f'{client_directory}/{file}', 'rb')
+                cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
+
+                serial_id = cert.serial_number
+
+                # check if certificate is revoked
+                revoked_cert = crl.get_revoked_certificate_by_serial_number(serial_id)
+                revoked = isinstance(revoked_cert, x509.RevokedCertificate)
+
+                cert_json = {
+                    'serial_id': serial_id,
+                    'firstname': cert.subject.get_attributes_for_oid(NameOID.GIVEN_NAME)[0].value,
+                    'lastname': cert.subject.get_attributes_for_oid(NameOID.SURNAME)[0].value,
+                    'email': cert.subject.get_attributes_for_oid(NameOID.EMAIL_ADDRESS)[0].value,
+                    'commonname': cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value,
+                    'notvalidbefore': cert.not_valid_before,
+                    'notvalidafter': cert.not_valid_after,
+                    'revoked': revoked
+                }
+                certs.append(cert_json)
+
+            def extract_serial_id(json):
+                try:
+                    return int(json['serial_id'])
+                except KeyError:
+                    return 0
+
+            certs.sort(key=extract_serial_id, reverse=True)
+            return certs
+        except FileNotFoundError:
+            raise FileNotFoundError(f'User {uid} does not exist.')
+    
+    '''
+    Generates a certificate revocation list.
+    '''
     def create_crl(self):
         t_now = datetime.datetime.utcnow()
         t_update = t_now + datetime.timedelta(hours=24)
@@ -193,7 +279,17 @@ class CA:
         
         self.store(self.crl_path, "wb", crl.public_bytes(encoding=PEM))
 
-    def revoke_certificate(self, serial_id_list, reason):
+    '''
+    Revokes a certificate.
+    ----------
+    uid : str
+        The user id.
+    serial_id_list : list
+        The list of certificate serial ids to revoke.
+    reason : str
+        The reason for revocation.
+    '''
+    def revoke_certificate(self, uid : str, serial_id_list : list, reason : str):
         # load certificate revocation list
         crl_data = self.load(self.crl_path, "rb")
         crl = x509.load_pem_x509_crl(crl_data)
@@ -212,7 +308,7 @@ class CA:
         for serial_id in serial_id_list:
             try:
                 # load user certificate
-                user_cert_file = f"../data/clients/{serial_id}_cert.pem"
+                user_cert_file = f"../data/clients/{uid}/{serial_id}_cert.pem"
                 user_cert_data = self.load(user_cert_file, "rb")
                 user_cert = x509.load_pem_x509_certificate(user_cert_data)
                 try:
@@ -234,13 +330,15 @@ class CA:
                     raise FileExistsError(f'Certificate with serial id {serial_id} has already been revoked.')
             except FileNotFoundError:
                 raise FileNotFoundError(f'Certificate with serial id {serial_id} does not exist.')
-
+            # errors should not happen if web server is implemented correctly 
         private_key = self.load_encrypted_private_key()
         new_crl = crl_builder.sign(private_key=private_key, algorithm=hashes.SHA256())
 
         self.store(self.crl_path, "wb", new_crl.public_bytes(encoding=PEM))
 
-    
+    '''
+    Returns the number of issued certificates, revoked certificates, and the current serial id. 
+    '''
     def get_status(self):
         n_issued = self.serial_id - 1 # since we start at 1
 

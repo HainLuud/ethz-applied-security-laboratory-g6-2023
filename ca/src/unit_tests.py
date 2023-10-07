@@ -1,3 +1,11 @@
+'''
+Certificate Authority - Unit tests
+Authors: 
+- Patrick Aldover (paldover@student.ethz.ch)
+- Damiano Amatruda (damatruda@student.ethz.ch)
+- Alessandro Cabodi (acabodi@student.ethz.ch)
+- Hain Luud (haluud@student.ethz.ch)
+'''
 import unittest, json
 
 from ca import CA
@@ -20,7 +28,7 @@ class TestCA(unittest.TestCase):
         self.ca.issue_certificate(user, self.passphrase)
         self.assertEqual(self.ca.get_status(), (2, 0, 3))
 
-        self.ca.revoke_certificate([2], "key_compromise")
+        self.ca.revoke_certificate(user.uid, [2], "key_compromise")
         self.assertEqual(self.ca.get_status(), (2, 1, 3))
 
     @unittest.skip("Local")
@@ -29,7 +37,7 @@ class TestCA(unittest.TestCase):
             self.ca.revoke_certificate([3, 4], "key_compromise")
         self.assertEqual(self.ca.get_status(), (2, 1, 3))
 
-        user = User(32, 'Cabodi', 'Alessandro', 'acabodi@student.ethz.ch')
+        user = User(33, 'Cabodi', 'Alessandro', 'acabodi@student.ethz.ch')
         self.ca.issue_certificate(user, self.passphrase)
         self.assertEqual(self.ca.get_status(), (3, 1, 4))
 
@@ -39,11 +47,11 @@ class TestCA(unittest.TestCase):
         self.ca.issue_certificate(user, self.passphrase)
         self.assertEqual(self.ca.get_status(), (5, 1, 6))
         
-        self.ca.revoke_certificate([3, 4], "key_compromise")
+        self.ca.revoke_certificate(user.uid, [3, 4], "key_compromise")
         self.assertEqual(self.ca.get_status(), (5, 3, 6))
 
         with self.assertRaises(FileExistsError):
-            self.ca.revoke_certificate([2], "key_compromise")
+            self.ca.revoke_certificate(32, [2], "key_compromise")
         self.assertEqual(self.ca.get_status(), (5, 3, 6))
 
     # @unittest.skip("Remote")
@@ -59,7 +67,16 @@ class TestCA(unittest.TestCase):
         response = self.client.post('/issue_certificate', json=payload)
         self.assertEqual(response.status_code, 200)
 
-        payload = {'serial_id_list': [2], 'reason': 'unspecified'}
+        response = self.client.post('/issue_certificate', json=payload)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.post('/issue_certificate', json=payload)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(f'/user_certificates/{payload["uid"]}')
+        print(response.data)
+
+        payload = {'uid': payload['uid'], 'serial_id_list': [2], 'reason': 'unspecified'}
         response = self.client.post('/revoke_certificate', json=payload)
         self.assertEqual(response.status_code, 200)
 
