@@ -22,7 +22,7 @@
     <h2>Certificate</h2>
     <form id="credentials-form" method="GET" action="{{ url_for('get_login_cert') }}">
       {% if not has_cert %}
-        <p>You must first install a certificate.</p>
+        <p>Certificate not provided.</p>
       {% endif %}
       <button type="submit" id="credentials-submit" {% if not has_cert %}disabled{% endif %}>Login</button>
     </form>
