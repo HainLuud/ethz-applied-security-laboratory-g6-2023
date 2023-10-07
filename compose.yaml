@@ -1,0 +1,36 @@
+services:
+  ca-server:
+    extends:
+      file: ca/compose.yaml
+      service: server
+    networks:
+      - backend
+  db-db:
+    extends:
+      file: db/compose.yaml
+      service: db
+    networks:
+      - backend
+  web-server:
+    extends:
+      file: web/compose.yaml
+      service: server
+    environment:
+      - DATABASE_HOST=db-db
+      - CA_HOST=ca-server:5000
+    networks:
+      - backend
+    depends_on:
+      ca-server:
+        condition: service_started
+      db-db:
+        condition: service_healthy
+networks:
+  backend:
+volumes:
+  db-data:
+secrets:
+  db-password:
+    file: db/db_password.txt
+  web-secret-key:
+    file: web/web_secret_key.txt
