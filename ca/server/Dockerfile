@@ -48,4 +48,4 @@ USER appuser
 EXPOSE 8000
 
 # Run the application.
-CMD cd src && python unit_tests.py && gunicorn 'ca_api:app' --certfile=../data/ca/server.crt --keyfile=../data/ca/server.key --bind=0.0.0.0:8000
+CMD python unit_tests.py && gunicorn 'ca_api:app' --certfile=./data/ca/server.crt --keyfile=./data/ca/server.key --bind=0.0.0.0:8000

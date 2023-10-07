@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 
 import base64
-import urllib.parse
 import hashlib
 import io
 import os
 import re
-import sys
 import traceback
+import urllib.parse
 from functools import wraps
 
+import requests
 from cryptography import x509
 from cryptography.x509.oid import NameOID
-import requests
 from flask import (Flask, flash, g, redirect, render_template, request,
                    send_file, session, url_for)
 from flask_sqlalchemy import SQLAlchemy
