@@ -103,6 +103,22 @@ def index():
     return render_template('index.html')
 
 
+@app.get('/crl')
+@login_required
+def get_crl():
+    try:
+        response = requests.get(f'http://{CA_HOST}/crl')
+        data = response.json()
+        if data['status'] != 'success':
+            raise Exception(data['message'])
+        crl = base64.b64decode(data['crl'].encode())
+        return send_file(io.BytesIO(crl), download_name='crl.pem', mimetype='application/x-pem-file')
+    except Exception:
+        traceback.print_exc()
+        flash('An error occurred while contacting the CA.', 'error')
+        return redirect(url_for('index'))
+
+
 @app.get('/login')
 def get_login():
     next = request.args.get('next')
@@ -156,10 +172,26 @@ def get_login_cert():
         return redirect(url_for('get_login', next=next))
 
     uid = match.group('uid')
+    serial_id = cert.serial_number
 
-    flash('Successful login.', 'warning')
-    session['uid'] = uid
-    return redirect(next)
+    try:
+        response = requests.get(f'http://{CA_HOST}/user_certificates/{uid}/{serial_id}')
+        data = response.json()
+        if data['status'] != 'success':
+            raise Exception(data['message'])
+
+        certificate = data['certificate']
+        if certificate['revoked']:
+            flash('The certificate was revoked.', 'error')
+            return redirect(url_for('get_login', next=next))
+
+        flash('Successful login.', 'warning')
+        session['uid'] = uid
+        return redirect(next)
+    except Exception:
+        traceback.print_exc()
+        flash('An error occurred while contacting the CA.', 'error')
+        return redirect(url_for('get_login', next=next))
 
 
 @app.get('/profile/', defaults={'uid': None})

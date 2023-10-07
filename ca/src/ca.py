@@ -279,6 +279,44 @@ class CA:
             return certs
         except FileNotFoundError:
             return []
+    
+    '''
+    Returns a certificate of a user based on the serial id.
+    ----------
+    uid : str
+        The user id.
+    serial_id : int
+        The serial id of the certificate
+    '''
+    def get_certificate_by_serial_id(self, uid : str, serial_id : int):
+        try:
+            # load certificate revocation list
+            crl_data = self.load(self.crl_path, "rb")
+            crl = x509.load_pem_x509_crl(crl_data)
+
+            cert_path = f'../data/clients/{uid}/{serial_id}_cert.pem'
+            
+            cert_pem = self.load(cert_path, 'rb')
+            cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
+            
+            # check if certificate is revoked
+            revoked_cert = crl.get_revoked_certificate_by_serial_number(serial_id)
+            revoked = isinstance(revoked_cert, x509.RevokedCertificate)
+            
+            cert_json = {
+                'serial_id': serial_id,
+                'firstname': cert.subject.get_attributes_for_oid(NameOID.GIVEN_NAME)[0].value,
+                'lastname': cert.subject.get_attributes_for_oid(NameOID.SURNAME)[0].value,
+                'email': cert.subject.get_attributes_for_oid(NameOID.EMAIL_ADDRESS)[0].value,
+                'commonname': cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value,
+                'notvalidbefore': cert.not_valid_before,
+                'notvalidafter': cert.not_valid_after,
+                'revoked': revoked
+            }
+            return cert_json
+        except FileNotFoundError:
+            raise FileNotFoundError(f'Certificate with the serial id {serial_id} does not exist.')
+
     '''
     Generates a certificate revocation list.
     '''
@@ -295,6 +333,10 @@ class CA:
         crl = builder.sign(private_key=private_key, algorithm=hashes.SHA256())
         
         self.store(self.crl_path, "wb", crl.public_bytes(encoding=PEM))
+
+    def get_crl(self):
+        crl_data = self.load(self.crl_path, "rb")
+        return crl_data
 
     '''
     Revokes a certificate.

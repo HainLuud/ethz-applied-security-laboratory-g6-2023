@@ -4,4 +4,9 @@
 {% block content %}
   <h1>Home</h1>
   <p>Welcome, {{ g.user.firstname }} {{ g.user.lastname }}!</p>
+  <div>
+    <form id="crl-form" method="GET" action="{{ url_for('get_crl') }}">
+      <button type="submit" id="crl-submit">Download Certificate Revocation List</button>
+    </form>
+  </div>
 {% endblock %}

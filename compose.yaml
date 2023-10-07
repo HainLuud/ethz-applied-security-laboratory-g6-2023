@@ -37,6 +37,7 @@ services:
 networks:
   backend:
 volumes:
+  ca-data:
   db-data:
 secrets:
   db-password:

@@ -8,6 +8,7 @@ Authors:
 - Alessandro Cabodi (acabodi@student.ethz.ch)
 - Hain Luud (haluud@student.ethz.ch)
 '''
+import traceback
 from flask import Flask, jsonify, request
 import base64
 from ca import CA
@@ -39,9 +40,10 @@ def issue_certificate():
         return jsonify({"status": "success", "certificate": cert_b64})
     
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 400
 
-@app.route('/user_certificates/<uid>', methods=['GET'])
+@app.route('/user_certificates/<string:uid>', methods=['GET'])
 def user_certificates(uid):
     try:
         certificates = ca.user_certificates(uid)
@@ -49,6 +51,30 @@ def user_certificates(uid):
         return jsonify({"status": "success", "certificates": certificates})
     
     except Exception as e:
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+@app.route('/user_certificates/<string:uid>/<int:serial_id>', methods=['GET'])
+def get_certificate_by_serial_id(uid, serial_id):
+    try:
+        certificate = ca.get_certificate_by_serial_id(uid, serial_id)
+
+        return jsonify({"status": "success", "certificate": certificate})
+    
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+@app.route('/crl', methods=['GET'])
+def get_crl():
+    try:
+        crl = ca.get_crl()
+        crl_b64 = base64.b64encode(crl).decode('utf-8')
+
+        return jsonify({"status": "success", "crl": crl_b64})
+    
+    except Exception as e:
+        traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 400
 
 @app.route('/revoke_certificate', methods=['POST'])
@@ -64,6 +90,7 @@ def revoke_certificate():
         return jsonify({"status": "success"})
     
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 400
 
 @app.route('/ca_status', methods=['GET'])
@@ -74,6 +101,7 @@ def get_ca_status():
         return jsonify({"status": "success", "n_issued": n_issued, "n_revoked": n_revoked, "next_serial_id": next_serial_id})
     
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
