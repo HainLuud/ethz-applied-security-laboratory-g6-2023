@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import base64
+import urllib.parse
 import hashlib
 import io
 import os
@@ -141,8 +142,8 @@ def get_login_cert():
     if not cert_data:
         flash('You must provide a certificate.', 'warning')
         return redirect(url_for('get_login', next=next))
-
-    cert = x509.load_pem_x509_certificate(cert_data.encode())
+    
+    cert = x509.load_pem_x509_certificate(urllib.parse.unquote(cert_data).encode())
     try:
         commonname = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
     except:
