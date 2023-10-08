@@ -4,20 +4,24 @@ services:
       file: ca/compose.yaml
       service: server
     networks:
-      - backend
+      backend:
+        aliases:
+          - ca.imovies.ch
   db-db:
     extends:
       file: db/compose.yaml
       service: db
     networks:
-      - backend
+      backend:
+        aliases:
+          - db.imovies.ch
   web-server:
     extends:
       file: web/compose.yaml
       service: server
     environment:
-      - DATABASE_HOST=db-db:3306
-      - CA_HOST=ca-server:8000
+      - DATABASE_HOST=db.imovies.ch:3306
+      - CA_HOST=ca.imovies.ch:8000
     networks:
       - backend
     depends_on:

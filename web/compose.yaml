@@ -9,8 +9,8 @@ services:
       - DATABASE_DB=imovies
       - DATABASE_USER=root
       - DATABASE_PASSWORD_FILE=/run/secrets/db-password
-      - DATABASE_HOST=127.0.0.1
-      - CA_HOST=127.0.0.1
+      - DATABASE_HOST=db.imovies.ch
+      - CA_HOST=ca.imovies.ch
       - WEB_SECRET_KEY_FILE=/run/secrets/web-secret-key
   nginx:
     image: nginx:latest
