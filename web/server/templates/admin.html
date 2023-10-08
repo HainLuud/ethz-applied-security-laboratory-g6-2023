@@ -2,23 +2,67 @@
 {% set active_page = "admin" %}
 {% block title %}Administration{% endblock %}
 {% block content %}
-  <h1>Administration</h1>
-  <div>
-    <table>
-      <thead>
-        <tr>
-          <th>Issued certificates</th>
-          <th>Revoked certificates</th>
-          <th>Current serial number</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{{ data.n_issued }}</td>
-          <td>{{ data.n_revoked }}</td>
-          <td>{{ data.next_serial_id }}</td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="space-y-8">
+    <div class="flex justify-center items-center">
+      <div class="stats stats-vertical lg:stats-horizontal shadow">
+        <div class="stat">
+          <div class="stat-title">Issued certificates</div>
+          <div class="stat-value">{{ data.n_issued }}</div>
+        </div>
+        
+        <div class="stat">
+          <div class="stat-title">Revoked certificates</div>
+          <div class="stat-value">{{ data.n_revoked }}</div>
+        </div>
+        
+        <div class="stat">
+          <div class="stat-title">Current serial number</div>
+          <div class="stat-value">{{ data.next_serial_id }}</div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="card shadow-2xl col-span-full">
+      <div class="card-body">
+        <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+          <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Users</h2>
+        </div>
+  
+        {% if users is not none %}
+          {% if users|length %}
+            <div class="w-full space-y-6 mt-10">
+              <div class="overflow-x-auto">
+                <table class="table table">
+                  <thead>
+                    <tr>
+                      <th>User ID</th>
+                      <th>First name</th>
+                      <th>Last name</th>
+                      <th>Email address</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for user in users %}
+                      <tr>
+                        <td>{{ user.uid }}</td>
+                        <td>{{ user.firstname }}</td>
+                        <td>{{ user.lastname }}</td>
+                        <td>{{ user.email }}</td>
+                        <th>
+                          <a href="{{ url_for('get_profile', uid=user.uid) }}" class="btn btn-ghost btn-xs">Profile</a>
+                        </th>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          {% else %}
+            <p class="mt-10 font-medium text-center">No users yet.</p>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
   </div>
 {% endblock %}

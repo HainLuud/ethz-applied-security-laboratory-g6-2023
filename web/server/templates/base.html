@@ -1,9 +1,11 @@
-{% set navigation_bar = [
-  (url_for('index'), 'index', 'Home'),
-  (url_for('get_profile'), 'profile', 'Profile'),
-  (url_for('get_admin'), 'admin', 'Administration'),
-  (url_for('get_logout'), 'logout', 'Log out'),
-] -%}
+{% if g.user %}
+  {% set navigation_bar = [
+    (url_for('index'), 'index', 'Home', true),
+    (url_for('get_profile'), 'profile', 'Profile', true),
+    (url_for('get_admin'), 'admin', 'Administration', g.user.is_admin()),
+    (url_for('get_logout'), 'logout', 'Log out', true),
+  ] -%}
+{% endif %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -13,30 +15,48 @@
   <meta name="description" content="">
   <meta name="author" content="">
   <title>CA - {% block title %}{% endblock %}</title>
-  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"> -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <script src="https://cdn.tailwindcss.com"></script>
   {% endblock %}
 </head>
 <body>
-  <div class="header clearfix">
-    <nav>
-      <ul class="nav">
-        {% for href, id, caption in navigation_bar %}
-          <li><a href="{{ href|urlencode }}" {% if id == active_page %}aria-current="page"{% endif %}>{{ caption }}</a></li>
-        {% endfor %}
-      </ul>
-    </nav>
-  </div>
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <div>
-        <ul class=flashes>
-          {% for message in messages %}
-            <p style="color: red;">{{ message }}</p>
+  <nav class="navbar bg-base-100">
+    <div class="flex-1">
+      <a href="{{ url_for('index') }}" class="btn btn-ghost normal-case text-xl">iMovies</a>
+    </div>
+    {% if navigation_bar %}
+      <div class="flex-none">
+        <ul class="menu menu-horizontal px-1">
+          {% for href, id, caption, cond in navigation_bar %}
+            {% if cond %}
+              <li><a href="{{ href|urlencode }}" class="font-medium leading-6" {% if id == active_page %}aria-current="page"{% endif %}>{{ caption }}</a></li>
+            {% endif %}
           {% endfor %}
         </ul>
       </div>
     {% endif %}
-  {% endwith %}
-  <div id="content">{% block content %}{% endblock %}</div>
+  </nav>
+  <div class="container mx-auto flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="space-y-3 mb-6">
+          {% for category, message in messages %}
+            {% if category == 'error' %}
+              <div class="alert alert-error">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{{ message }}</span>
+              </div>
+            {% else %}
+              <div class="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-info shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>{{ message }}</span>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <div id="content">{% block content %}{% endblock %}</div>
+  </div>
 </body>
 </html>

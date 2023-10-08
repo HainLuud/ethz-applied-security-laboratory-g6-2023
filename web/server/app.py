@@ -51,7 +51,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not g.user:
-            flash('You need to log in first.', 'warning')
+            flash('You need to log in first.', 'error')
             return redirect(url_for('get_login', next=request.path))
         return f(*args, **kwargs)
     return decorated_function
@@ -61,10 +61,10 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not g.user:
-            flash('You need to log in first.', 'warning')
+            flash('You need to log in first.', 'error')
             return redirect(url_for('get_login', next=request.path))
         if not g.user.is_admin():
-            flash('You do not have permission to access this page.', 'warning')
+            flash('You do not have permission to access the page.', 'error')
             return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
@@ -134,16 +134,16 @@ def post_login():
     next = request.form.get('next', url_for('index'))
 
     if not uid or not pwd:
-        flash('You must provide user ID and password.', 'warning')
+        flash('You must specify user ID and password.', 'error')
         return redirect(url_for('get_login', next=next))
 
     user = db.session.get(User, uid)
 
     if not user or hash_pwd(pwd) != user.pwd:
-        flash('Wrong user ID or password.', 'warning')
+        flash('Wrong user ID or password.', 'error')
         return redirect(url_for('get_login', next=next))
 
-    flash('Successful login.', 'warning')
+    flash('Successful login.', 'info')
     session['uid'] = user.uid
     return redirect(next)
 
@@ -154,19 +154,19 @@ def get_login_cert():
     cert_data = request.environ.get('HTTP_X_SSL_CERT')
 
     if not cert_data:
-        flash('You must provide a certificate.', 'warning')
+        flash('You must specify a certificate.', 'error')
         return redirect(url_for('get_login', next=next))
     
     cert = x509.load_pem_x509_certificate(urllib.parse.unquote(cert_data).encode())
     try:
         commonname = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
     except:
-        flash('Certificate processing error.', 'warning')
+        flash('Certificate processing error.', 'error')
         return redirect(url_for('get_login', next=next))
 
     match = re.search(r'(?P<uid>.*)\.imovies\.ch', commonname)
     if not match:
-        flash('Wrong certificate.', 'warning')
+        flash('Wrong certificate.', 'error')
         return redirect(url_for('get_login', next=next))
 
     uid = match.group('uid')
@@ -183,7 +183,7 @@ def get_login_cert():
             flash('The certificate was revoked.', 'error')
             return redirect(url_for('get_login', next=next))
 
-        flash('Successful login.', 'warning')
+        flash('Successful login.', 'info')
         session['uid'] = uid
         return redirect(next)
     except Exception:
@@ -200,13 +200,13 @@ def get_profile(uid):
         return redirect(url_for('get_profile', uid=g.user.uid))
 
     if not g.user.is_admin() and g.user.uid != uid:
-        flash('You do not have permission to access this page.', 'warning')
+        flash('You do not have permission to access the page.', 'error')
         return redirect(url_for('index'))
 
     user = db.session.get(User, uid)
 
     if not user:
-        flash('User not found.', 'warning')
+        flash('User not found.', 'error')
         return redirect(url_for('index'))
 
     try:
@@ -227,13 +227,13 @@ def get_profile(uid):
 @login_required
 def post_profile(uid):
     if not g.user.is_admin() and g.user.uid != uid:
-        flash('You do not have permission to access this page.', 'warning')
+        flash('You do not have permission to access the page.', 'error')
         return redirect(url_for('index'))
 
     user = db.session.get(User, uid)
 
     if not user:
-        flash('User not found.', 'warning')
+        flash('User not found.', 'error')
         return redirect(url_for('index'))
 
     lastname = request.form.get('lastname')
@@ -243,11 +243,11 @@ def post_profile(uid):
     pwd2 = request.form.get('pwd2')
 
     if not any(v for v in (lastname, firstname, email, pwd)):
-        flash('Invalid information.', 'warning')
+        flash('Invalid information.', 'error')
         return redirect(url_for('get_profile', uid=user.uid))
 
     if pwd and pwd != pwd2:
-        flash('The input passwords are not equal.', 'warning')
+        flash('The input passwords are not equal.', 'error')
         return redirect(url_for('get_profile', uid=user.uid))
 
     if lastname:
@@ -268,17 +268,17 @@ def post_profile(uid):
 @app.post('/profile/<string:uid>/issue')
 @login_required
 def post_issue(uid):
-    passphrase = request.form.get('passphrase')
-
     if not g.user.is_admin() and g.user.uid != uid:
-        flash('You do not have permission to access this page.', 'warning')
+        flash('You do not have permission to access the page.', 'error')
         return redirect(url_for('index'))
 
     user = db.session.get(User, uid)
 
     if not user:
-        flash('User not found.', 'warning')
+        flash('User not found.', 'error')
         return redirect(url_for('index'))
+
+    passphrase = request.form.get('passphrase')
 
     try:
         json = {
@@ -303,16 +303,28 @@ def post_issue(uid):
 @app.post('/profile/<string:uid>/revoke')
 @login_required
 def post_revoke(uid):
-    serial_id_list = request.form.get('serial_id_list')
-
     if not g.user.is_admin() and g.user.uid != uid:
-        flash('You do not have permission to access this page.', 'warning')
+        flash('You do not have permission to access the page.', 'error')
         return redirect(url_for('index'))
 
     user = db.session.get(User, uid)
 
     if not user:
-        flash('User not found.', 'warning')
+        flash('User not found.', 'error')
+        return redirect(url_for('get_profile', uid=user.uid))
+
+    try:
+        serial_id_list = [int(item) for item in request.form.getlist('serial_id_list')]
+    except:
+        flash('Invalid serial ID.', 'error')
+        return redirect(url_for('get_profile', uid=user.uid))
+
+    if not serial_id_list:
+        flash('You must specify serial IDs.', 'error')
+        return redirect(url_for('get_profile', uid=user.uid))
+
+    if not g.user.is_admin() and g.user.uid != uid:
+        flash('You do not have permission to access the page.', 'error')
         return redirect(url_for('index'))
 
     try:
@@ -324,7 +336,7 @@ def post_revoke(uid):
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
-        flash('Certificate revoked.', 'info')
+        flash('Certificates revoked.', 'info')
     except Exception:
         traceback.print_exc()
         flash('An error occurred while contacting the CA.', 'error')
@@ -345,7 +357,9 @@ def get_admin():
         flash('An error occurred while contacting the CA.', 'error')
         data = {}
 
-    return render_template('admin.html', data=data)
+    users = db.session.query(User).all()
+
+    return render_template('admin.html', data=data, users=users)
 
 
 @app.get('/logout')
