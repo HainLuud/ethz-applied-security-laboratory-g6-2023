@@ -30,9 +30,9 @@ class CA:
     BITS = 2048
 
     # hard-coded file paths
-    root_certificate_path = './data/ca/rootCACert.pem'
-    #pub_key_path = './data/ca/pub.pem'
-    priv_key_path = './data/ca/rootCAKey.pem'
+    root_certificate_path = './certs/rootCACert.pem'
+    #pub_key_path = './certs/pub.pem'
+    priv_key_path = './certs/rootCAKey.pem'
     serial_id_path = './data/ca/serial_id.txt'
     crl_path = './data/ca/crl.pem'
 

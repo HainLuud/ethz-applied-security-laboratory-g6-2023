@@ -3,6 +3,7 @@ services:
     build:
       context: server
     volumes:
+      - ./certs:/app/certs
       - ca-data:/app/data
     ports:
       - "${CA_PORT}:8000"

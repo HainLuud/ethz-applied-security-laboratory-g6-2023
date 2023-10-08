@@ -12,6 +12,8 @@ services:
       - DATABASE_HOST=db.imovies.ch
       - CA_HOST=ca.imovies.ch
       - WEB_SECRET_KEY_FILE=/run/secrets/web-secret-key
+    volumes:
+      - ./certs:/app/certs
   nginx:
     image: nginx:latest
     restart: always
@@ -19,6 +21,7 @@ services:
       - "${WEB_PORT}:443"
     volumes:
       - ./nginx:/etc/nginx
+      - ./certs:/etc/nginx/certs
     # depends_on:
     #   server:
     #     condition: service_started
