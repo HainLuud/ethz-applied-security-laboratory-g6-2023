@@ -106,5 +106,5 @@ def get_ca_status():
 
 
 if __name__ == "__main__":
-    context = ('./certs/server.crt', './certs/server.key')
+    context = ('./certs/ca.imovies.ch.crt', './certs/ca.imovies.ch.key')
     app.run(debug=True, host='0.0.0.0', port=8000, sslcontext=context)

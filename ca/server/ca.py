@@ -30,9 +30,9 @@ class CA:
     BITS = 2048
 
     # hard-coded file paths
-    root_certificate_path = './certs/rootCACert.pem'
+    root_certificate_path = './certs/root.imovies.ch.crt'
     #pub_key_path = './certs/pub.pem'
-    priv_key_path = './certs/rootCAKey.pem'
+    priv_key_path = './certs/root.imovies.ch.key'
     serial_id_path = './data/ca/serial_id.txt'
     crl_path = './data/ca/crl.pem'
 
