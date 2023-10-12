@@ -7,17 +7,9 @@ services:
       backend:
         aliases:
           - ca.imovies.ch
-    logging:
-      driver: syslog
-      options:
-        syslog-address: tcp://127.0.0.1:514
-        # syslog-address: tcp+tls://127.0.0.1:6514
-        # syslog-tls-ca-cert: "./ca/certs/root.imovies.ch.crt"
-        # syslog-tls-cert: "./ca/certs/log.imovies.ch.crt"
-        # syslog-tls-key: "./ca/certs/ca.imovies.ch.key"
-    # depends_on:
-    #   log-server:
-    #     condition: service_started
+    depends_on:
+      log-server:
+        condition: service_started
   db-db:
     extends:
       file: db/compose.yaml
@@ -26,14 +18,14 @@ services:
       backend:
         aliases:
           - db.imovies.ch
-  # log-server:
-  #   extends:
-  #     file: log/compose.yaml
-  #     service: server
-  #   networks:
-  #     backend:
-  #       aliases:
-  #         - log.imovies.ch
+  log-server:
+    extends:
+      file: log/compose.yaml
+      service: server
+    networks:
+      backend:
+        aliases:
+          - log.imovies.ch
   web-server:
     extends:
       file: web/compose.yaml
@@ -48,6 +40,8 @@ services:
         condition: service_started
       db-db:
         condition: service_healthy
+      log-server:
+        condition: service_started
   web-nginx:
     extends:
       file: web/compose.yaml

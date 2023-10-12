@@ -17,6 +17,7 @@ from cryptography.hazmat.backends import default_backend
 import datetime
 from os import urandom, path, makedirs, listdir
 from logger import Logger
+from rfc5424logging import Rfc5424SysLogHandler
 from user import User
 from OpenSSL.crypto import PKCS12, FILETYPE_PEM, load_certificate, load_privatekey 
 
@@ -54,17 +55,21 @@ class CA:
         self.create_crl()
 
     def test_logger(self):
-        # os.system('echo "<14>Test UDP syslog message" >> /dev/tcp/log.imovies.ch/514')
-
         import logging
         import logging.handlers
 
         my_logger = logging.getLogger()
         my_logger.setLevel(logging.INFO)
 
-        port = 514
-        handler = logging.handlers.SysLogHandler(address=('host.docker.internal', port), facility=1, socktype=socket.SOCK_STREAM)
-        print("PORT",  port)
+        handler = Rfc5424SysLogHandler(
+            address=('log.imovies.ch', 6514),
+            facility=1,
+            socktype=socket.SOCK_STREAM,
+            tls_enable=True,
+            tls_verify=True,
+            tls_ca_bundle='./certs/root.imovies.ch.crt'
+        )
+        print("PRINT")
 
         my_logger.addHandler(handler)
 
