@@ -7,5 +7,11 @@ services:
       - ca-data:/app/data
     ports:
       - "${CA_PORT}:8000"
+    # logging:
+    #   driver: syslog
+    #   options:
+    #     syslog-address: tcp+tls://127.0.0.1:6514
+    #     syslog-tls-ca-cert: ./certs/root.imovies.ch.crt
+    #     syslog-tls-cert: ./certs/log.imovies.ch.crt
 volumes:
   ca-data:

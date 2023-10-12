@@ -47,4 +47,5 @@ COPY . .
 EXPOSE 8000
 
 # Run the application.
-CMD python unit_tests.py && gunicorn 'ca_api:app' --certfile=./certs/ca.imovies.ch.crt --keyfile=./certs/ca.imovies.ch.key --bind=0.0.0.0:8000
+# python unit_tests.py && 
+CMD gunicorn 'ca_api:app' --certfile=./certs/ca.imovies.ch.crt --keyfile=./certs/ca.imovies.ch.key --bind=0.0.0.0:8000

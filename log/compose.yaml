@@ -1,0 +1,13 @@
+services:
+  server:
+    image: rsyslog/syslog_appliance_alpine:latest
+    volumes:
+      - ./certs:/app/certs
+      - log-data:/logs
+    ports:
+      - 514:514/udp  # syslog UDP
+      - 514:514/tcp  # syslog TCP
+      - 6514:6514/tcp  # syslog TLS
+    restart: unless-stopped
+volumes:
+  log-data:

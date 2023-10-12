@@ -6,6 +6,8 @@ Authors:
 - Alessandro Cabodi (acabodi@student.ethz.ch)
 - Hain Luud (haluud@student.ethz.ch)
 '''
+
+import socket
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, PublicFormat, NoEncryption, BestAvailableEncryption, load_pem_private_key
 from cryptography import x509
@@ -37,6 +39,9 @@ class CA:
     crl_path = './data/ca/crl.pem'
 
     def __init__(self):
+        # TODO: DELETE
+        self.test_logger()
+        #------------------------------------
         self.create_directories()
         self.logger = Logger()
         self.revocation_list = []
@@ -48,6 +53,26 @@ class CA:
         self.read_cert()
         self.create_crl()
 
+    def test_logger(self):
+        # os.system('echo "<14>Test UDP syslog message" >> /dev/tcp/log.imovies.ch/514')
+
+        import logging
+        import logging.handlers
+
+        my_logger = logging.getLogger()
+        my_logger.setLevel(logging.INFO)
+
+        port = 514
+        handler = logging.handlers.SysLogHandler(address=('host.docker.internal', port), facility=1, socktype=socket.SOCK_STREAM)
+        print("PORT",  port)
+
+        my_logger.addHandler(handler)
+
+        my_logger.info('this is info')
+        my_logger.debug('this is debug')
+        my_logger.critical('this is critical')
+
+        
     '''
     Creates directories on startup in case they do not exist.
     '''
