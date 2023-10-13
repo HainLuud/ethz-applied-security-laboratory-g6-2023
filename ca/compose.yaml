@@ -5,7 +5,7 @@ services:
     volumes:
       - ./certs:/app/certs
       - ca-data:/app/data
-      - ./certs/admin.imovies.ch.pem:/app/data/clients/admin/14785487178505059841_cert.pem
+      - ./certs/admin.imovies.ch.pem:/app/data/clients/admin/310629842216214876788742898011996388621811897248_cert.pem
     ports:
       - "${CA_PORT}:8000"
 volumes:

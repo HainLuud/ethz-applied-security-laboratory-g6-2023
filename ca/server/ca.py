@@ -297,20 +297,10 @@ class CA:
                 revoked_cert = crl.get_revoked_certificate_by_serial_number(serial_id)
                 revoked = isinstance(revoked_cert, x509.RevokedCertificate)
 
-                try:
-                    firstname = cert.subject.get_attributes_for_oid(NameOID.GIVEN_NAME)[0].value
-                except IndexError:
-                    firstname = ''
-                
-                try:
-                    lastname = cert.subject.get_attributes_for_oid(NameOID.SURNAME)[0].value
-                except IndexError:
-                    lastname = ''
-
                 cert_json = {
                     'serial_id': serial_id,
-                    'firstname': firstname,
-                    'lastname': lastname,
+                    'firstname': cert.subject.get_attributes_for_oid(NameOID.GIVEN_NAME)[0].value,
+                    'lastname': cert.subject.get_attributes_for_oid(NameOID.SURNAME)[0].value,
                     'email': cert.subject.get_attributes_for_oid(NameOID.EMAIL_ADDRESS)[0].value,
                     'commonname': cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value,
                     'notvalidbefore': cert.not_valid_before,
@@ -319,13 +309,13 @@ class CA:
                 }
                 certs.append(cert_json)
 
-            def extract_serial_id(json):
+            def extract_datetime(json):
                 try:
-                    return int(json['serial_id'])
+                    return json['notvalidafter'].timestamp()
                 except KeyError:
                     return 0
 
-            certs.sort(key=extract_serial_id, reverse=True)
+            certs.sort(key=extract_datetime, reverse=True)
             return certs
         except FileNotFoundError:
             return []
@@ -352,21 +342,10 @@ class CA:
             # check if certificate is revoked
             revoked_cert = crl.get_revoked_certificate_by_serial_number(serial_id)
             revoked = isinstance(revoked_cert, x509.RevokedCertificate)
-
-            try:
-                firstname = cert.subject.get_attributes_for_oid(NameOID.GIVEN_NAME)[0].value
-            except IndexError:
-                firstname = None
-            
-            try:
-                lastname = cert.subject.get_attributes_for_oid(NameOID.SURNAME)[0].value
-            except IndexError:
-                lastname = None
-            
             cert_json = {
                 'serial_id': serial_id,
-                'firstname': firstname,
-                'lastname': lastname,
+                'firstname': cert.subject.get_attributes_for_oid(NameOID.GIVEN_NAME)[0].value,
+                'lastname': cert.subject.get_attributes_for_oid(NameOID.SURNAME)[0].value,
                 'email': cert.subject.get_attributes_for_oid(NameOID.EMAIL_ADDRESS)[0].value,
                 'commonname': cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value,
                 'notvalidbefore': cert.not_valid_before,
