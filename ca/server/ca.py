@@ -351,6 +351,11 @@ class CA:
     Generates a certificate revocation list.
     '''
     def create_crl(self):
+
+        if path.exists(self.crl_path):
+            self.logger.debug("Create  already exists. Loading it.")
+            return
+        
         t_now = datetime.datetime.utcnow()
         t_update = t_now + datetime.timedelta(hours=24)
 
