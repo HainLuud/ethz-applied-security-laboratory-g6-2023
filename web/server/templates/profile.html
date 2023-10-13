@@ -3,89 +3,91 @@
 {% block title %}Profile{% endblock %}
 {% block content %}
   <div class="grid grid-cols-12 gap-8">
-    <div class="card shadow-2xl sm:col-span-7 col-span-full">
-      <form id="profile-form" method="POST" action="{{ url_for('post_profile', uid=user.uid) }}" class="card-body">
-        <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-          <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Edit the profile</h2>
-        </div>
-
-        <div class="w-full mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-10">
-          <div class="form-control col-span-full">
-            <label for="uid" class="label pt-0">
-              <span class="label-text font-medium leading-6">User ID</span>
-            </label>
-            <div class="input input-bordered input-sm flex">
-              <span class="flex select-none items-center text-gray-500 sm:text-sm">imovies.ch/profile/</span>
-              <input type="text" id="uid" name="uid" value="{{ user.uid }}" class="block flex-1 border-0 bg-transparent py-1.5" disabled>
-            </div>
-          </div>
-
-          <div class="form-control sm:col-span-4">
-            <label for="email" class="label pt-0">
-              <span class="label-text font-medium leading-6">Email address</span>
-            </label>
-            <input type="email" id="email" name="email" value="{{ user.email }}" class="input input-bordered input-sm">
-          </div>
-
-          <div class="form-control sm:col-span-3">
-            <label for="firstname" class="label pt-0">
-              <span class="label-text font-medium leading-6">First name</span>
-            </label>
-            <input type="text" id="firstname" name="firstname" value="{{ user.firstname }}" class="input input-bordered input-sm">
-          </div>
-
-          <div class="form-control sm:col-span-3">
-            <label for="lastname" class="label pt-0">
-              <span class="label-text font-medium leading-6">Last name</span>
-            </label>
-            <input type="text" id="lastname" name="lastname" value="{{ user.lastname }}" class="input input-bordered input-sm">
-          </div>
-
-          <div class="form-control sm:col-span-5">
-            <label for="pwd" class="label pt-0">
-              <span class="label-text font-medium leading-6">New password</span>
-            </label>
-            <input type="password" id="pwd" name="pwd" class="input input-bordered input-sm">
-          </div>
-
-          <div class="form-control sm:col-span-5">
-            <label for="pwd2" class="label pt-0">
-              <span class="label-text font-medium leading-6">Confirm password</span>
-            </label>
-            <input type="password" id="pwd2" name="pwd2" class="input input-bordered input-sm">
-          </div>
-        </div>
-
-        <div class="mt-6 flex items-center justify-end gap-x-6">
-          <button id="profile-submit" class="btn btn-primary btn-sm">Save</button>
-        </div>
-      </form>
-    </div>
-
-    <div class="card shadow-2xl sm:col-span-5 col-span-full">
-      <div class="card-body">
-        <form id="issue-form" method="POST" action="{{ url_for('post_issue', uid=user.uid)|urlencode }}">
+    {% if not user.is_admin() %}
+      <div class="card shadow-2xl sm:col-span-7 col-span-full">
+        <form id="profile-form" method="POST" action="{{ url_for('post_profile', uid=user.uid) }}" class="card-body">
           <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-            <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Issue a certificate</h2>
+            <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Edit the profile</h2>
           </div>
 
-          <div class="w-full space-y-6 mt-10">
-            <div class="form-control">
-              <label for="passphrase" class="label pt-0">
-                <span class="label-text font-medium leading-6">Passphrase</span>
+          <div class="w-full mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-10">
+            <div class="form-control col-span-full">
+              <label for="uid" class="label pt-0">
+                <span class="label-text font-medium leading-6">User ID</span>
               </label>
-              <input type="password" id="passphrase" name="passphrase" class="input input-bordered input-sm">
+              <div class="input input-bordered input-sm flex">
+                <span class="flex select-none items-center text-gray-500 sm:text-sm">imovies.ch/profile/</span>
+                <input type="text" id="uid" name="uid" value="{{ user.uid }}" class="block flex-1 border-0 bg-transparent py-1.5" disabled>
+              </div>
+            </div>
+
+            <div class="form-control sm:col-span-4">
+              <label for="email" class="label pt-0">
+                <span class="label-text font-medium leading-6">Email address</span>
+              </label>
+              <input type="email" id="email" name="email" value="{{ user.email }}" class="input input-bordered input-sm">
+            </div>
+
+            <div class="form-control sm:col-span-3">
+              <label for="firstname" class="label pt-0">
+                <span class="label-text font-medium leading-6">First name</span>
+              </label>
+              <input type="text" id="firstname" name="firstname" value="{{ user.firstname }}" class="input input-bordered input-sm">
+            </div>
+
+            <div class="form-control sm:col-span-3">
+              <label for="lastname" class="label pt-0">
+                <span class="label-text font-medium leading-6">Last name</span>
+              </label>
+              <input type="text" id="lastname" name="lastname" value="{{ user.lastname }}" class="input input-bordered input-sm">
+            </div>
+
+            <div class="form-control sm:col-span-5">
+              <label for="pwd" class="label pt-0">
+                <span class="label-text font-medium leading-6">New password</span>
+              </label>
+              <input type="password" id="pwd" name="pwd" class="input input-bordered input-sm">
+            </div>
+
+            <div class="form-control sm:col-span-5">
+              <label for="pwd2" class="label pt-0">
+                <span class="label-text font-medium leading-6">Confirm password</span>
+              </label>
+              <input type="password" id="pwd2" name="pwd2" class="input input-bordered input-sm">
             </div>
           </div>
 
           <div class="mt-6 flex items-center justify-end gap-x-6">
-            <button id="issue-submit" class="btn btn-primary btn-sm">Download</button>
+            <button id="profile-submit" class="btn btn-primary btn-sm">Save</button>
           </div>
         </form>
       </div>
-    </div>
 
-    <div class="card shadow-2xl col-span-full">
+      <div class="card shadow-2xl sm:col-span-5 col-span-full">
+        <div class="card-body">
+          <form id="issue-form" method="POST" action="{{ url_for('post_issue', uid=user.uid)|urlencode }}">
+            <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+              <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Issue a certificate</h2>
+            </div>
+
+            <div class="w-full space-y-6 mt-10">
+              <div class="form-control">
+                <label for="passphrase" class="label pt-0">
+                  <span class="label-text font-medium leading-6">Passphrase</span>
+                </label>
+                <input type="password" id="passphrase" name="passphrase" class="input input-bordered input-sm">
+              </div>
+            </div>
+
+            <div class="mt-6 flex items-center justify-end gap-x-6">
+              <button id="issue-submit" class="btn btn-primary btn-sm">Download</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="card shadow-2xl {% if user.is_admin() %}sm:col-span-7{% endif %} col-span-full">
       <div class="card-body">
         <div class="sm:mx-auto sm:w-full sm:max-w-sm">
           <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Certificates</h2>
@@ -114,7 +116,7 @@
                         <tr>
                           <td>
                             <label>
-                              <input type="checkbox" name="serial_id_list" value="{{ certificate.serial_id }}" class="checkbox checkbox" {% if certificate.revoked %}checked disabled{% endif %}>
+                              <input type="checkbox" name="serial_id_list" value="{{ certificate.serial_id }}" class="checkbox checkbox" {% if certificate.revoked %}checked{% endif %} {% if user.is_admin() or certificate.revoked %}disabled{% endif %}>
                             </label>
                           </td>
                           <td>{{ certificate.serial_id }}</td>
@@ -130,9 +132,11 @@
                   </table>
                 </div>
 
-                <div class="mt-6 flex items-center justify-end gap-x-6">
-                  <button id="revoke-submit" class="btn btn-primary btn-sm">Revoke selected</button>
-                </div>
+                {% if not user.is_admin() %}
+                  <div class="mt-6 flex items-center justify-end gap-x-6">
+                    <button id="revoke-submit" class="btn btn-primary btn-sm" {% if user.is_admin() %}disabled{% endif %}>Revoke selected</button>
+                  </div>
+                {% endif %}
               </div>
             </form>
           {% else %}
@@ -141,5 +145,30 @@
         {% endif %}
       </div>
     </div>
+
+    {% if user.is_admin() %}
+      <div class="card shadow-2xl sm:col-span-5 col-span-full">
+        <div class="card-body">
+          <form id="issue-form" method="POST" action="{{ url_for('post_renew_certificate', uid=user.uid)|urlencode }}">
+            <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+              <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Renew the certificate</h2>
+            </div>
+
+            <div class="w-full space-y-6 mt-10">
+              <div class="form-control">
+                <label for="passphrase" class="label pt-0">
+                  <span class="label-text font-medium leading-6">Passphrase</span>
+                </label>
+                <input type="password" id="passphrase" name="passphrase" class="input input-bordered input-sm">
+              </div>
+            </div>
+
+            <div class="mt-6 flex items-center justify-end gap-x-6">
+              <button id="issue-submit" class="btn btn-primary btn-sm">Submit</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    {% endif %}
   </div>
 {% endblock %}

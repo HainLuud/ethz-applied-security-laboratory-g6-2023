@@ -27,7 +27,7 @@ RUN adduser \
     --no-create-home \
     --uid "${UID}" \
     appuser
-RUN mkdir -p ./data && chown -R appuser ./data
+RUN mkdir -p ./data/clients/admin && chown -R appuser ./data
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.

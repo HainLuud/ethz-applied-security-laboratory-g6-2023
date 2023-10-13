@@ -74,7 +74,7 @@ def create_admin():
     admin = db.session.get(User, 'admin')
     if admin:
         db.session.delete(admin)
-    admin = User(uid='admin', lastname='Admin', firstname='Admin', email='admin@imovies.ch', pwd=hash_pwd('admin'))
+    admin = User(uid='admin', lastname='', firstname='', email='admin@imovies.ch', pwd='')
     db.session.add(admin)
     db.session.commit()
 
@@ -337,6 +337,33 @@ def post_revoke(uid):
         if data['status'] != 'success':
             raise Exception(data['message'])
         flash('Certificates revoked.', 'info')
+    except Exception:
+        traceback.print_exc()
+        flash('An error occurred while contacting the CA.', 'error')
+
+    return redirect(url_for('get_profile', uid=user.uid))
+
+
+@app.post('/profile/<string:uid>/renew_certificate')
+@admin_required
+def post_renew_certificate(uid):
+    user = db.session.get(User, uid)
+
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('get_profile', uid=user.uid))
+
+    passphrase = request.form.get('passphrase')
+
+    try:
+        json = {
+            'passphrase': passphrase,
+        }
+        response = requests.post(f'https://{CA_HOST}/renew_admin_certificate', json=json, verify='./certs/root.imovies.ch.crt')
+        data = response.json()
+        if data['status'] != 'success':
+            raise Exception(data['message'])
+        flash('Certificate renewed.', 'info')
     except Exception:
         traceback.print_exc()
         flash('An error occurred while contacting the CA.', 'error')

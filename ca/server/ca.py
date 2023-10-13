@@ -81,7 +81,7 @@ class CA:
     Creates directories on startup in case they do not exist.
     '''
     def create_directories(self):
-        directories = ['./data', './data/ca', './data/clients']
+        directories = ['./data', './data/ca', './data/clients', './data/clients/admin']
         for directory in directories:
             if not path.exists(directory): 
                 makedirs(directory) 
@@ -196,6 +196,15 @@ class CA:
         The passphrase to export the PKCS12 file.
     '''
     def issue_certificate(self, user: User, passphrase: bytes | None, revoke=False):
+        # revoke old certificates
+        if revoke:
+            certs = self.user_certificates(user.uid)
+            serial_id_list = []
+            for cert in certs:
+                if not cert['revoked']:
+                    serial_id_list.append(cert['serial_id'])
+            self.revoke_certificate(user.uid, serial_id_list, x509.ReasonFlags.affiliation_changed)
+        
         self.logger.debug("Generating new client key pair ...")
         # create user key pair 
         client_private_key = rsa.generate_private_key(public_exponent=self.EXPONENT, key_size=self.BITS, )
@@ -213,8 +222,8 @@ class CA:
             x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, u"iMovies"),
             x509.NameAttribute(NameOID.COMMON_NAME, f"{user.uid}.imovies.ch"), 
             x509.NameAttribute(NameOID.EMAIL_ADDRESS, user.email),
-            x509.NameAttribute(NameOID.SURNAME, user.lastname),
-            x509.NameAttribute(NameOID.GIVEN_NAME, user.firstname),
+            x509.NameAttribute(NameOID.SURNAME, user.lastname or ''),
+            x509.NameAttribute(NameOID.GIVEN_NAME, user.firstname or ''),
         ])
         
         # generate certificate
@@ -261,14 +270,6 @@ class CA:
 
         self.logger.success("Generated new client certificate ...")
         
-        # revoke old certificates
-        if revoke:
-            certs = self.user_certificates(user.uid)
-            serial_id_list = []
-            for cert in certs:
-                if not cert['revoked']:
-                    serial_id_list.append(cert['serial_id'])
-            self.revoke_certificate(user.uid, serial_id_list, x509.ReasonFlags.affiliation_changed)
         return client_cert
     
     '''
@@ -296,10 +297,20 @@ class CA:
                 revoked_cert = crl.get_revoked_certificate_by_serial_number(serial_id)
                 revoked = isinstance(revoked_cert, x509.RevokedCertificate)
 
+                try:
+                    firstname = cert.subject.get_attributes_for_oid(NameOID.GIVEN_NAME)[0].value
+                except IndexError:
+                    firstname = ''
+                
+                try:
+                    lastname = cert.subject.get_attributes_for_oid(NameOID.SURNAME)[0].value
+                except IndexError:
+                    lastname = ''
+
                 cert_json = {
                     'serial_id': serial_id,
-                    'firstname': cert.subject.get_attributes_for_oid(NameOID.GIVEN_NAME)[0].value,
-                    'lastname': cert.subject.get_attributes_for_oid(NameOID.SURNAME)[0].value,
+                    'firstname': firstname,
+                    'lastname': lastname,
                     'email': cert.subject.get_attributes_for_oid(NameOID.EMAIL_ADDRESS)[0].value,
                     'commonname': cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value,
                     'notvalidbefore': cert.not_valid_before,
@@ -341,11 +352,21 @@ class CA:
             # check if certificate is revoked
             revoked_cert = crl.get_revoked_certificate_by_serial_number(serial_id)
             revoked = isinstance(revoked_cert, x509.RevokedCertificate)
+
+            try:
+                firstname = cert.subject.get_attributes_for_oid(NameOID.GIVEN_NAME)[0].value
+            except IndexError:
+                firstname = None
+            
+            try:
+                lastname = cert.subject.get_attributes_for_oid(NameOID.SURNAME)[0].value
+            except IndexError:
+                lastname = None
             
             cert_json = {
                 'serial_id': serial_id,
-                'firstname': cert.subject.get_attributes_for_oid(NameOID.GIVEN_NAME)[0].value,
-                'lastname': cert.subject.get_attributes_for_oid(NameOID.SURNAME)[0].value,
+                'firstname': firstname,
+                'lastname': lastname,
                 'email': cert.subject.get_attributes_for_oid(NameOID.EMAIL_ADDRESS)[0].value,
                 'commonname': cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value,
                 'notvalidbefore': cert.not_valid_before,
@@ -442,7 +463,7 @@ class CA:
     def renew_admin_certificate(self, user: User, passphrase: bytes | None):
         if user.uid != 'admin':
             raise Exception('You don\'t have admin permission')
-        cert_pem = self.issue_certificate(user=user, passphrase=passphrase, revoke=True)
+        self.issue_certificate(user=user, passphrase=passphrase, revoke=True)
         # don't return admin certificate
 
     '''

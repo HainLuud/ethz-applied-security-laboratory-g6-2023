@@ -3,9 +3,9 @@ services:
     build:
       context: server
     volumes:
-      - ./certs/admin.imovies.ch.pem:/app/data/clients/admin/admin.imovies.ch.pem
       - ./certs:/app/certs
       - ca-data:/app/data
+      - ./certs/admin.imovies.ch.pem:/app/data/clients/admin/14785487178505059841_cert.pem
     ports:
       - "${CA_PORT}:8000"
 volumes:
