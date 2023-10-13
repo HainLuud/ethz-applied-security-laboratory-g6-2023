@@ -43,6 +43,26 @@ def issue_certificate():
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 400
 
+@app.route('/renew_admin_certificate', methods=['POST'])
+def renew_admin_certificate():
+    try:
+        data = request.json
+        uid = data['uid']
+        lastname = data['lastname']
+        firstname = data['firstname']
+        email = data['email']
+        user = User(uid, lastname, firstname, email)
+        
+        passphrase = data['passphrase'].encode()
+        
+        ca.renew_certificate(user, passphrase)
+
+        return jsonify({"status": "success", "message": "Successfully renewed admin certificate. Please contact CA to retrieve the certificate."})
+    
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e)}), 400
+
 @app.route('/user_certificates/<string:uid>', methods=['GET'])
 def user_certificates(uid):
     try:

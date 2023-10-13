@@ -41,7 +41,7 @@ class CA:
 
     def __init__(self):
         # TODO: DELETE
-        self.test_logger()
+        #self.test_logger()
         #------------------------------------
         self.create_directories()
         self.logger = Logger()
@@ -49,8 +49,7 @@ class CA:
         self.serial_id = self.get_initial_serial_id()
         self.private_key_password = urandom(64) # TODO: how to store passphrase securely
         #self.create_keypair()
-        #self.generate_root_certificate()
-        # TODO: read key pair and certificate
+        #self.generate_root_certificate(
         self.read_cert()
         self.create_crl()
 
@@ -188,7 +187,6 @@ class CA:
             
         self.update_serial_id()
     
-    # TODO: new certificate: revoke old certificate
     '''
     Issues a new certificate for a user.
     ----------
@@ -197,7 +195,7 @@ class CA:
     passphrase : bytes | None
         The passphrase to export the PKCS12 file.
     '''
-    def issue_certificate(self, user: User, passphrase : bytes | None):
+    def issue_certificate(self, user: User, passphrase: bytes | None, revoke=False):
         self.logger.debug("Generating new client key pair ...")
         # create user key pair 
         client_private_key = rsa.generate_private_key(public_exponent=self.EXPONENT, key_size=self.BITS, )
@@ -206,6 +204,7 @@ class CA:
                                                                   encryption_algorithm=NoEncryption()) # PKCS12 already uses passphrase
         self.logger.success("Generated new client key pair!")
         self.logger.debug("Generating new client certificate ...")
+        
         subject = x509.Name([
             x509.NameAttribute(NameOID.COUNTRY_NAME, u"CH"),
             x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"Zurich"),
@@ -217,7 +216,7 @@ class CA:
             x509.NameAttribute(NameOID.SURNAME, user.lastname),
             x509.NameAttribute(NameOID.GIVEN_NAME, user.firstname),
         ])
-
+        
         # generate certificate
         basic_constraints = x509.BasicConstraints(ca=False, path_length=None)
         key_usage = x509.KeyUsage(key_cert_sign=False,
@@ -246,8 +245,10 @@ class CA:
         cert_pem = cert.public_bytes(PEM)
         
         client_directory = f'./data/clients/{user.uid}'
+        
         if not path.exists(client_directory): 
-            makedirs(client_directory) 
+            makedirs(client_directory)
+        
         self.store(f'{client_directory}/{self.serial_id}_cert.pem', "wb+", cert.public_bytes(encoding=PEM))
         self.update_serial_id()
         
@@ -259,7 +260,15 @@ class CA:
         client_cert = pkcs12.export(passphrase=passphrase)
 
         self.logger.success("Generated new client certificate ...")
-
+        
+        # revoke old certificates
+        if revoke:
+            certs = self.user_certificates(user.uid)
+            serial_id_list = []
+            for cert in certs:
+                if not cert['revoked']:
+                    serial_id_list.append(cert['serial_id'])
+            self.revoke_certificate(user.uid, serial_id_list, x509.ReasonFlags.affiliation_changed)
         return client_cert
     
     '''
@@ -429,6 +438,12 @@ class CA:
         new_crl = crl_builder.sign(private_key=private_key, algorithm=hashes.SHA256())
 
         self.store(self.crl_path, "wb", new_crl.public_bytes(encoding=PEM))
+
+    def renew_admin_certificate(self, user: User, passphrase: bytes | None):
+        if user.uid != 'admin':
+            raise Exception('You don\'t have admin permission')
+        cert_pem = self.issue_certificate(user=user, passphrase=passphrase, revoke=True)
+        # don't return admin certificate
 
     '''
     Returns the number of issued certificates, revoked certificates, and the current serial id. 

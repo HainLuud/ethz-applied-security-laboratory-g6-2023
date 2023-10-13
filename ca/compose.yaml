@@ -3,6 +3,7 @@ services:
     build:
       context: server
     volumes:
+      - ./certs/admin.imovies.ch.pem:/app/data/clients/admin/admin.imovies.ch.pem
       - ./certs:/app/certs
       - ca-data:/app/data
     ports:
