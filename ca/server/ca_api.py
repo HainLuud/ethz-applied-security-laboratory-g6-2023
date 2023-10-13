@@ -33,8 +33,9 @@ def issue_certificate():
         user = User(uid, lastname, firstname, email)
         
         passphrase = data['passphrase'].encode()
+        revoke = data['revoke']
         
-        cert = ca.issue_certificate(user, passphrase)
+        cert = ca.issue_certificate(user, passphrase, revoke)
         cert_b64 = base64.b64encode(cert).decode('utf-8')
 
         return jsonify({"status": "success", "certificate": cert_b64})

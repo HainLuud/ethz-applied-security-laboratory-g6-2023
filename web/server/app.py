@@ -223,9 +223,9 @@ def get_profile(uid):
     return render_template('profile.html', user=user, certificates=certificates)
 
 
-@app.post('/profile/<string:uid>')
+@app.post('/profile/<string:uid>/change_password')
 @login_required
-def post_profile(uid):
+def post_change_password(uid):
     if not g.user.is_admin() and g.user.uid != uid:
         flash('You do not have permission to access the page.', 'error')
         return redirect(url_for('index'))
@@ -236,32 +236,22 @@ def post_profile(uid):
         flash('User not found.', 'error')
         return redirect(url_for('index'))
 
-    lastname = request.form.get('lastname')
-    firstname = request.form.get('firstname')
-    email = request.form.get('email')
     pwd = request.form.get('pwd')
     pwd2 = request.form.get('pwd2')
 
-    if not any(v for v in (lastname, firstname, email, pwd)):
+    if not pwd or not pwd2:
         flash('Invalid information.', 'error')
         return redirect(url_for('get_profile', uid=user.uid))
 
-    if pwd and pwd != pwd2:
+    if pwd != pwd2:
         flash('The input passwords are not equal.', 'error')
         return redirect(url_for('get_profile', uid=user.uid))
 
-    if lastname:
-        user.lastname = lastname
-    if firstname:
-        user.firstname = firstname
-    if email:
-        user.email = email
-    if pwd:
-        user.pwd = hash_pwd(pwd)
+    user.pwd = hash_pwd(pwd)
 
     db.session.commit()
 
-    flash('Profile updated.', 'info')
+    flash('Password changed.', 'info')
     return redirect(url_for('get_profile', uid=user.uid))
 
 
@@ -278,7 +268,22 @@ def post_issue(uid):
         flash('User not found.', 'error')
         return redirect(url_for('index'))
 
+    lastname = request.form.get('lastname')
+    firstname = request.form.get('firstname')
+    email = request.form.get('email')
     passphrase = request.form.get('passphrase')
+
+    if not all(v for v in (lastname, firstname, email)):
+        flash('Invalid information.', 'error')
+        return redirect(url_for('get_profile', uid=user.uid))
+
+    user.lastname = lastname
+    user.firstname = firstname
+    user.email = email
+
+    revoke = db.session.is_modified(user)
+
+    db.session.commit()
 
     try:
         json = {
@@ -287,6 +292,7 @@ def post_issue(uid):
             'firstname': user.firstname,
             'email': user.email,
             'passphrase': passphrase,
+            'revoke': revoke,
         }
         response = requests.post(f'https://{CA_HOST}/issue_certificate', json=json, verify='./certs/root.imovies.ch.crt')
         data = response.json()
