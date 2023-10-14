@@ -1,0 +1,5 @@
+services:
+  nginx:
+    depends_on:
+      server:
+        condition: service_started

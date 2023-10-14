@@ -3,10 +3,24 @@ services:
     build:
       context: server
     volumes:
-      - ./certs:/app/certs
+      - ./certs:/etc/certs:ro
       - ca-data:/app/data
-      - ./certs/admin.imovies.ch.pem:/app/data/clients/admin/310629842216214876788742898011996388621811897248_cert.pem
+      - ./certs/admin.imovies.ch.pem:/app/data/clients/admin/310629842216214876788742898011996388621811897248_cert.pem:ro
     ports:
       - "${CA_PORT}:8000"
+  scheduled-backup:
+    image: creativeprojects/resticprofile:latest
+    entrypoint: '/bin/sh'
+    command:
+      - '-c'
+      - 'resticprofile schedule --all && crond -f'
+    volumes:
+      - ./profiles.yaml:/etc/resticprofile/profiles.yaml:ro
+      - ./bak_repository.txt:/etc/resticprofile/bak_repository.txt:ro
+      - ./bak_password.txt:/etc/resticprofile/bak_password.txt:ro
+      - ./certs:/etc/certs:ro
+      - ca-data:/resticprofile/ca-data
+    environment:
+      - TZ=Etc/UTC
 volumes:
   ca-data:

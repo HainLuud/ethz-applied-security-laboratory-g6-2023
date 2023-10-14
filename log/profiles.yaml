@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://creativeprojects.github.io/resticprofile/jsonschema/config-1.json
+
+version: "1"
+
+global:
+  scheduler: crond
+
+default:
+  repository-file: bak_repository.txt
+  password-file: bak_password.txt
+  cacert: /etc/certs/root.imovies.ch.crt
+  initialize: true
+
+  backup:
+    verbose: true
+    source: /resticprofile
+    schedule: "*:00,15,30,45"
+    schedule-permission: user

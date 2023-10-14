@@ -5,8 +5,9 @@ services:
     secrets:
       - db-password
     volumes:
+      - ./imovies_users.dump:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./certs:/etc/certs:ro
       - db-data:/var/lib/mysql
-      - ./imovies_users.dump:/docker-entrypoint-initdb.d/init.sql
     environment:
       - MYSQL_DATABASE=imovies
       - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db-password
@@ -17,8 +18,22 @@ services:
       interval: 3s
       retries: 5
       start_period: 30s
-volumes:
-  db-data:
+  scheduled-backup:
+    image: creativeprojects/resticprofile:latest
+    entrypoint: '/bin/sh'
+    command:
+      - '-c'
+      - 'resticprofile schedule --all && crond -f'
+    volumes:
+      - ./profiles.yaml:/etc/resticprofile/profiles.yaml:ro
+      - ./bak_repository.txt:/etc/resticprofile/bak_repository.txt:ro
+      - ./bak_password.txt:/etc/resticprofile/bak_password.txt:ro
+      - ./certs:/etc/certs:ro
+      - db-data:/resticprofile/db-data
+    environment:
+      - TZ=Etc/UTC
 secrets:
   db-password:
     file: db_password.txt
+volumes:
+  db-data:

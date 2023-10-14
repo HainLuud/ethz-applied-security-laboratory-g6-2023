@@ -1,4 +1,12 @@
 services:
+  bak-server:
+    extends:
+      file: bak/compose.yaml
+      service: server
+    networks:
+      backend:
+        aliases:
+          - bak.imovies.ch
   ca-server:
     extends:
       file: ca/compose.yaml
@@ -10,6 +18,12 @@ services:
     depends_on:
       log-server:
         condition: service_started
+  ca-scheduled-backup:
+    extends:
+      file: ca/compose.yaml
+      service: scheduled-backup
+    networks:
+      backend:
   db-db:
     extends:
       file: db/compose.yaml
@@ -18,6 +32,12 @@ services:
       backend:
         aliases:
           - db.imovies.ch
+  db-scheduled-backup:
+    extends:
+      file: db/compose.yaml
+      service: scheduled-backup
+    networks:
+      backend:
   log-server:
     extends:
       file: log/compose.yaml
@@ -26,6 +46,12 @@ services:
       backend:
         aliases:
           - log.imovies.ch
+  log-scheduled-backup:
+    extends:
+      file: log/compose.yaml
+      service: scheduled-backup
+    networks:
+      backend:
   web-server:
     extends:
       file: web/compose.yaml
@@ -54,6 +80,7 @@ services:
 networks:
   backend:
 volumes:
+  bak-data:
   ca-data:
   db-data:
   log-data:

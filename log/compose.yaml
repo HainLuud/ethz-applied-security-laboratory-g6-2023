@@ -3,11 +3,25 @@ services:
     build:
       context: .
     volumes:
-      - ./rsyslog.conf:/etc/rsyslog.conf
-      - ./certs:/etc/certs
+      - ./rsyslog.conf:/etc/rsyslog.conf:ro
+      - ./certs:/etc/certs:ro
       - log-data:/logs
     ports:
       - 6514:6514
     restart: unless-stopped
+  scheduled-backup:
+    image: creativeprojects/resticprofile:latest
+    entrypoint: '/bin/sh'
+    command:
+      - '-c'
+      - 'resticprofile schedule --all && crond -f'
+    volumes:
+      - ./profiles.yaml:/etc/resticprofile/profiles.yaml:ro
+      - ./bak_repository.txt:/etc/resticprofile/bak_repository.txt:ro
+      - ./bak_password.txt:/etc/resticprofile/bak_password.txt:ro
+      - ./certs:/etc/certs:ro
+      - log-data:/resticprofile/log-data
+    environment:
+      - TZ=Etc/UTC
 volumes:
   log-data:

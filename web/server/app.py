@@ -106,7 +106,7 @@ def index():
 @login_required
 def get_crl():
     try:
-        response = requests.get(f'https://{CA_HOST}/crl', verify='./certs/root.imovies.ch.crt')
+        response = requests.get(f'https://{CA_HOST}/crl', verify='/etc/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -173,7 +173,7 @@ def get_login_cert():
     serial_id = cert.serial_number
 
     try:
-        response = requests.get(f'https://{CA_HOST}/user_certificates/{uid}/{serial_id}', verify='./certs/root.imovies.ch.crt')
+        response = requests.get(f'https://{CA_HOST}/user_certificates/{uid}/{serial_id}', verify='/etc/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -210,7 +210,7 @@ def get_profile(uid):
         return redirect(url_for('index'))
 
     try:
-        response = requests.get(f'https://{CA_HOST}/user_certificates/{user.uid}', verify='./certs/root.imovies.ch.crt')
+        response = requests.get(f'https://{CA_HOST}/user_certificates/{user.uid}', verify='/etc/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -294,7 +294,7 @@ def post_issue(uid):
             'passphrase': passphrase,
             'revoke': revoke,
         }
-        response = requests.post(f'https://{CA_HOST}/issue_certificate', json=json, verify='./certs/root.imovies.ch.crt')
+        response = requests.post(f'https://{CA_HOST}/issue_certificate', json=json, verify='/etc/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -338,7 +338,7 @@ def post_revoke(uid):
             'uid': user.uid,
             'serial_id_list': serial_id_list,
         }
-        response = requests.post(f'https://{CA_HOST}/revoke_certificate', json=json, verify='./certs/root.imovies.ch.crt')
+        response = requests.post(f'https://{CA_HOST}/revoke_certificate', json=json, verify='/etc/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -365,7 +365,7 @@ def post_renew_certificate(uid):
         json = {
             'passphrase': passphrase,
         }
-        response = requests.post(f'https://{CA_HOST}/renew_admin_certificate', json=json, verify='./certs/root.imovies.ch.crt')
+        response = requests.post(f'https://{CA_HOST}/renew_admin_certificate', json=json, verify='/etc/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -381,7 +381,7 @@ def post_renew_certificate(uid):
 @admin_required
 def get_admin():
     try:
-        response = requests.get(f'https://{CA_HOST}/ca_status', verify='./certs/root.imovies.ch.crt')
+        response = requests.get(f'https://{CA_HOST}/ca_status', verify='/etc/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
