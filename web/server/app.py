@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import base64
+from datetime import timedelta
 import hashlib
 import io
 import os
@@ -80,11 +81,14 @@ def admin_required(f):
 
 
 @app.before_request
+def make_session_permanent():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=5)
+
+
+@app.before_request
 def load_user():
-    try:
-        g.user = db.session.get(User, session['uid'])
-    except:
-        g.user = None
+    g.user = db.session.get(User, session['uid']) if 'uid' in session else None
 
 
 @app.errorhandler(404)
