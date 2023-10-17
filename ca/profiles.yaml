@@ -8,7 +8,7 @@ global:
 default:
   repository-file: bak_repository.txt
   password-file: bak_password.txt
-  cacert: /etc/certs/root.imovies.ch.crt
+  cacert: /etc/ssl/certs/root.imovies.ch.crt
   initialize: true
 
   backup:

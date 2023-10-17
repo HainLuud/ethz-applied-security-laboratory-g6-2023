@@ -20,17 +20,22 @@ DATABASE_DB = os.getenv('DATABASE_DB')
 DATABASE_USER = os.getenv('DATABASE_USER')
 DATABASE_PASSWORD_FILE = os.getenv('DATABASE_PASSWORD_FILE')
 with open(DATABASE_PASSWORD_FILE, 'r') as f:
-    DATABASE_PASSWORD = f.read()
+    DATABASE_PASSWORD = f.read().strip()
 DATABASE_HOST = os.getenv('DATABASE_HOST')
 WEB_SECRET_KEY_FILE = os.getenv('WEB_SECRET_KEY_FILE')
 with open(WEB_SECRET_KEY_FILE, 'r') as f:
-    WEB_SECRET_KEY = f.read()
+    WEB_SECRET_KEY = f.read().strip()
 CA_HOST = os.getenv('CA_HOST')
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+mysqlconnector://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_DB}'
 app.config['SECRET_KEY'] = WEB_SECRET_KEY
-db = SQLAlchemy(app)
+db = SQLAlchemy(app, engine_options={
+    'connect_args': {
+        'ssl_verify_identity': True,
+        'ssl_ca': '/etc/ssl/certs/root.imovies.ch.crt',
+    }
+})
 
 
 class User(db.Model):
@@ -45,6 +50,10 @@ class User(db.Model):
 
     def is_admin(self) -> str:
         return self.uid == 'admin'
+
+    @staticmethod
+    def hash_pwd(pwd: str) -> str:
+        return hashlib.sha256(pwd.encode()).hexdigest()
 
 
 def login_required(f):
@@ -70,19 +79,6 @@ def admin_required(f):
     return decorated_function
 
 
-def create_admin():
-    admin = db.session.get(User, 'admin')
-    if admin:
-        db.session.delete(admin)
-    admin = User(uid='admin', lastname='', firstname='', email='admin@imovies.ch', pwd='')
-    db.session.add(admin)
-    db.session.commit()
-
-
-def hash_pwd(pwd: str) -> str:
-    return hashlib.sha256(pwd.encode()).hexdigest()
-
-
 @app.before_request
 def load_user():
     try:
@@ -106,7 +102,7 @@ def index():
 @login_required
 def get_crl():
     try:
-        response = requests.get(f'https://{CA_HOST}/crl', verify='/etc/certs/root.imovies.ch.crt')
+        response = requests.get(f'https://{CA_HOST}/crl', verify='/etc/ssl/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -139,7 +135,7 @@ def post_login():
 
     user = db.session.get(User, uid)
 
-    if not user or hash_pwd(pwd) != user.pwd:
+    if not user or User.hash_pwd(pwd) != user.pwd:
         flash('Wrong user ID or password.', 'error')
         return redirect(url_for('get_login', next=next))
 
@@ -173,7 +169,7 @@ def get_login_cert():
     serial_id = cert.serial_number
 
     try:
-        response = requests.get(f'https://{CA_HOST}/user_certificates/{uid}/{serial_id}', verify='/etc/certs/root.imovies.ch.crt')
+        response = requests.get(f'https://{CA_HOST}/user_certificates/{uid}/{serial_id}', verify='/etc/ssl/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -210,7 +206,7 @@ def get_profile(uid):
         return redirect(url_for('index'))
 
     try:
-        response = requests.get(f'https://{CA_HOST}/user_certificates/{user.uid}', verify='/etc/certs/root.imovies.ch.crt')
+        response = requests.get(f'https://{CA_HOST}/user_certificates/{user.uid}', verify='/etc/ssl/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -247,7 +243,7 @@ def post_change_password(uid):
         flash('The input passwords are not equal.', 'error')
         return redirect(url_for('get_profile', uid=user.uid))
 
-    user.pwd = hash_pwd(pwd)
+    user.pwd = User.hash_pwd(pwd)
 
     db.session.commit()
 
@@ -294,7 +290,7 @@ def post_issue(uid):
             'passphrase': passphrase,
             'revoke': revoke,
         }
-        response = requests.post(f'https://{CA_HOST}/issue_certificate', json=json, verify='/etc/certs/root.imovies.ch.crt')
+        response = requests.post(f'https://{CA_HOST}/issue_certificate', json=json, verify='/etc/ssl/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -338,7 +334,7 @@ def post_revoke(uid):
             'uid': user.uid,
             'serial_id_list': serial_id_list,
         }
-        response = requests.post(f'https://{CA_HOST}/revoke_certificate', json=json, verify='/etc/certs/root.imovies.ch.crt')
+        response = requests.post(f'https://{CA_HOST}/revoke_certificate', json=json, verify='/etc/ssl/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -365,7 +361,7 @@ def post_renew_certificate(uid):
         json = {
             'passphrase': passphrase,
         }
-        response = requests.post(f'https://{CA_HOST}/renew_admin_certificate', json=json, verify='/etc/certs/root.imovies.ch.crt')
+        response = requests.post(f'https://{CA_HOST}/renew_admin_certificate', json=json, verify='/etc/ssl/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -381,7 +377,7 @@ def post_renew_certificate(uid):
 @admin_required
 def get_admin():
     try:
-        response = requests.get(f'https://{CA_HOST}/ca_status', verify='/etc/certs/root.imovies.ch.crt')
+        response = requests.get(f'https://{CA_HOST}/ca_status', verify='/etc/ssl/certs/root.imovies.ch.crt')
         data = response.json()
         if data['status'] != 'success':
             raise Exception(data['message'])
@@ -405,7 +401,6 @@ def get_logout():
 
 with app.app_context():
     db.create_all()
-    create_admin()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8000)

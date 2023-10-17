@@ -48,4 +48,4 @@ EXPOSE 8000
 
 # Run the application.
 # python unit_tests.py && 
-CMD gunicorn 'ca_api:app' --certfile=/etc/certs/ca.imovies.ch.crt --keyfile=/etc/certs/ca.imovies.ch.key --bind=0.0.0.0:8000
+CMD gunicorn 'ca_api:app' --certfile=/etc/ssl/certs/ca.imovies.ch.crt --keyfile=/etc/ssl/certs/ca.imovies.ch.key --bind=0.0.0.0:8000

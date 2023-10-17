@@ -1,5 +1,5 @@
 services:
-  nginx:
+  proxy:
     depends_on:
       server:
         condition: service_started

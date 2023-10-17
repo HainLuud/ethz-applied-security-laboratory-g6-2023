@@ -24,10 +24,10 @@ services:
       service: scheduled-backup
     networks:
       backend:
-  db-db:
+  db-server:
     extends:
       file: db/compose.yaml
-      service: db
+      service: server
     networks:
       backend:
         aliases:
@@ -64,14 +64,14 @@ services:
     depends_on:
       ca-server:
         condition: service_started
-      db-db:
+      db-server:
         condition: service_healthy
       log-server:
         condition: service_started
-  web-nginx:
+  web-proxy:
     extends:
       file: web/compose.yaml
-      service: nginx
+      service: proxy
     networks:
       - backend
     depends_on:
@@ -85,6 +85,8 @@ volumes:
   db-data:
   log-data:
 secrets:
+  db-root-password:
+    file: db/db_root_password.txt
   db-password:
     file: db/db_password.txt
   web-secret-key:

@@ -33,9 +33,9 @@ class CA:
     BITS = 2048
 
     # hard-coded file paths
-    root_certificate_path = '/etc/certs/root.imovies.ch.crt'
-    #pub_key_path = '/etc/certs/pub.pem'
-    priv_key_path = '/etc/certs/root.imovies.ch.key'
+    root_certificate_path = '/etc/ssl/certs/root.imovies.ch.crt'
+    #pub_key_path = '/etc/ssl/certs/pub.pem'
+    priv_key_path = '/etc/ssl/certs/root.imovies.ch.key'
     serial_id_path = '/app/data/ca/serial_id.txt'
     crl_path = '/app/data/ca/crl.pem'
 
@@ -66,7 +66,7 @@ class CA:
             socktype=socket.SOCK_STREAM,
             tls_enable=True,
             tls_verify=True,
-            tls_ca_bundle='/etc/certs/root.imovies.ch.crt'
+            tls_ca_bundle='/etc/ssl/certs/root.imovies.ch.crt'
         )
         print("PRINT")
 
