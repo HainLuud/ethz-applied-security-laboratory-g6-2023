@@ -149,7 +149,7 @@
     {% if user.is_admin() %}
       <div class="card shadow-2xl sm:col-span-5 col-span-full">
         <div class="card-body">
-          <form id="issue-form" method="POST" action="{{ url_for('post_renew_certificate', uid=user.uid)|urlencode }}">
+          <form id="renew-form" method="POST" action="{{ url_for('post_renew', uid=user.uid)|urlencode }}">
             <div class="sm:mx-auto sm:w-full sm:max-w-sm">
               <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Renew the certificate</h2>
             </div>
@@ -157,14 +157,14 @@
             <div class="w-full space-y-6 mt-10">
               <div class="form-control">
                 <label for="passphrase" class="label pt-0">
-                  <span class="label-text font-medium leading-6">Passphrase</span>
+                  <span class="label-text font-medium leading-6">Certificate passphrase</span>
                 </label>
                 <input type="password" id="passphrase" name="passphrase" class="input input-bordered input-sm">
               </div>
             </div>
 
             <div class="mt-6 flex items-center justify-end gap-x-6">
-              <button id="issue-submit" class="btn btn-primary btn-sm">Submit</button>
+              <button id="renew-submit" class="btn btn-primary btn-sm">Submit</button>
             </div>
           </form>
         </div>

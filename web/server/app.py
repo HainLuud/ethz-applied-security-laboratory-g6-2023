@@ -171,16 +171,25 @@ def get_login_cert():
     try:
         response = requests.get(f'https://{CA_HOST}/user_certificates/{uid}/{serial_id}', verify='/etc/ssl/certs/root.imovies.ch.crt')
         data = response.json()
+
         if data['status'] != 'success':
             raise Exception(data['message'])
 
         certificate = data['certificate']
+
         if certificate['revoked']:
             flash('The certificate was revoked.', 'error')
             return redirect(url_for('get_login', next=next))
 
+        user = db.session.get(User, uid)
+
+        if not user:
+            user = User(uid=uid, lastname=certificate['lastname'], firstname=certificate['firstname'], email=certificate['email'], pwd='')
+            db.session.add(user)
+            db.session.commit()
+
         flash('Successful login.', 'info')
-        session['uid'] = uid
+        session['uid'] = user.uid
         return redirect(next)
     except Exception:
         traceback.print_exc()
@@ -254,7 +263,7 @@ def post_change_password(uid):
 @app.post('/profile/<string:uid>/issue')
 @login_required
 def post_issue(uid):
-    if not g.user.is_admin() and g.user.uid != uid:
+    if (g.user.is_admin() and g.user.uid == uid) or (not g.user.is_admin() and g.user.uid != uid):
         flash('You do not have permission to access the page.', 'error')
         return redirect(url_for('index'))
 
@@ -346,9 +355,9 @@ def post_revoke(uid):
     return redirect(url_for('get_profile', uid=user.uid))
 
 
-@app.post('/profile/<string:uid>/renew_certificate')
+@app.post('/profile/<string:uid>/renew')
 @admin_required
-def post_renew_certificate(uid):
+def post_renew(uid):
     user = db.session.get(User, uid)
 
     if not user:
