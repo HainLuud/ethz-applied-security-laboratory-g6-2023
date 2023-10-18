@@ -8,6 +8,7 @@ import os
 import re
 import traceback
 import urllib.parse
+from datetime import timedelta
 from functools import wraps
 
 import requests
@@ -16,6 +17,7 @@ from cryptography.x509.oid import NameOID
 from flask import (Flask, flash, g, redirect, render_template, request,
                    send_file, session, url_for)
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
 
 DATABASE_DB = os.getenv('DATABASE_DB')
 DATABASE_USER = os.getenv('DATABASE_USER')
@@ -26,17 +28,22 @@ DATABASE_HOST = os.getenv('DATABASE_HOST')
 WEB_SECRET_KEY_FILE = os.getenv('WEB_SECRET_KEY_FILE')
 with open(WEB_SECRET_KEY_FILE, 'r') as f:
     WEB_SECRET_KEY = f.read().strip()
+WEB_CSRF_SECRET_KEY_FILE = os.getenv('WEB_CSRF_SECRET_KEY_FILE')
+with open(WEB_CSRF_SECRET_KEY_FILE, 'r') as f:
+    WEB_CSRF_SECRET_KEY = f.read().strip()
 CA_HOST = os.getenv('CA_HOST')
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+mysqlconnector://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_DB}'
 app.config['SECRET_KEY'] = WEB_SECRET_KEY
+app.config['WTF_CSRF_SECRET_KEY'] = WEB_CSRF_SECRET_KEY
 db = SQLAlchemy(app, engine_options={
     'connect_args': {
         'ssl_verify_identity': True,
         'ssl_ca': '/etc/ssl/certs/root.imovies.ch.crt',
     }
 })
+csrf = CSRFProtect(app)
 
 
 class User(db.Model):
@@ -93,7 +100,12 @@ def load_user():
 
 @app.errorhandler(404)
 def not_found(e):
-    return render_template('not_found.html'), 404
+    return render_template('error.html', code=404, title='Page not found', message='We could not find the page you are looking for.'), 404
+
+
+@app.errorhandler(400)
+def handle_csrf_error(e):
+    return render_template('error.html', code=400, title='Bad request', message='Your request was invalid.'), 400
 
 
 @app.get('/')
@@ -131,7 +143,7 @@ def get_login():
 def post_login():
     uid = request.form.get('uid')
     pwd = request.form.get('pwd')
-    next = request.form.get('next', url_for('index'))
+    next = '/' + request.form.get('next', url_for('index')).lstrip('/')
 
     if not uid or not pwd:
         flash('You must specify user ID and password.', 'error')
@@ -148,9 +160,9 @@ def post_login():
     return redirect(next)
 
 
-@app.get('/login_cert')
-def get_login_cert():
-    next = request.form.get('next', url_for('index'))
+@app.post('/login_cert')
+def post_login_cert():
+    next = '/' + request.form.get('next', url_for('index')).lstrip('/')
     cert_data = request.environ.get('HTTP_X_SSL_CERT')
 
     if not cert_data:

@@ -1,5 +1,6 @@
 Flask
 Flask-SQLAlchemy
+Flask-WTF
 cryptography
 gunicorn
 mysql-connector-python

@@ -2,36 +2,44 @@
 {% set active_page = "login" %}
 {% block title %}Login{% endblock %}
 {% block content %}
-  <div class="card flex-shrink-0 w-full mx-auto max-w-md shadow-2xl {% if not has_cert %}pb-8{% endif %}">
-    <form id="credentials-form" method="POST" action="{{ url_for('post_login') }}" class="card-body">
-      <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-        <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Log in to your account</h2>
-      </div>
-      <div class="w-full space-y-6 mt-10">
-        <div class="form-control">
-          <label for="uid" class="label pt-0">
-            <span class="label-text font-medium leading-6">User ID</span>
-          </label>
-          <input type="text" id="uid" name="uid" class="input input-bordered input-sm" required>
+  <main class="card flex-shrink-0 w-full mx-auto max-w-md shadow-2xl {% if not has_cert %}pb-8{% endif %}">
+    <div class="card-body">
+      <form id="credentials-form" method="POST" action="{{ url_for('post_login') }}">
+        <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+          <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Log in to your account</h2>
         </div>
-        <div class="form-control">
-          <label for="pwd" class="label pt-0">
-            <span class="label-text font-medium leading-6">Password</span>
-          </label>
-          <input type="password" id="pwd" name="pwd" class="input input-bordered input-sm" required>
-        </div>
-        <div class="form-control">
-          <button id="login-submit" class="btn btn-primary btn-sm">Log in</button>
-        </div>
-      </div>
-      <div class="divider">OR</div>
-      <div class="w-full space-y-6">
-        <div {% if not has_cert %}class="tooltip tooltip-open tooltip-bottom w-full" data-tip="Certificate not provided"{% endif %}>
+        <div class="w-full space-y-6 mt-10">
           <div class="form-control">
-            <a href="{{ url_for('get_login_cert') }}" class="btn btn-sm {% if not has_cert %}btn-disabled{% endif %}" {% if not has_cert %}aria-disabled="true"{% endif %}>Log in using certificate</a>
+            <label for="uid" class="label pt-0">
+              <span class="label-text font-medium leading-6">User ID</span>
+            </label>
+            <input type="text" id="uid" name="uid" class="input input-bordered input-sm" required>
+          </div>
+          <div class="form-control">
+            <label for="pwd" class="label pt-0">
+              <span class="label-text font-medium leading-6">Password</span>
+            </label>
+            <input type="password" id="pwd" name="pwd" class="input input-bordered input-sm" required>
+          </div>
+          <div class="form-control">
+            <input type="hidden" name="next" value="{{ next }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button id="credentials-submit" class="btn btn-primary btn-sm">Log in</button>
           </div>
         </div>
-      </div>
-    </form>
-  </div>
+      </form>
+      <div class="divider">OR</div>
+      <form id="certificate-form" method="POST" action="{{ url_for('post_login_cert') }}">
+        <div class="w-full space-y-6">
+          <div {% if not has_cert %}class="tooltip tooltip-open tooltip-bottom w-full" data-tip="Certificate not provided"{% endif %}>
+            <div class="form-control">
+              <input type="hidden" name="next" value="{{ next }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button id="certificate-submit" class="btn btn-sm" {% if not has_cert %}disabled{% endif %}>Log in using certificate</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
 {% endblock %}

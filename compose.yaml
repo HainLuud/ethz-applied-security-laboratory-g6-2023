@@ -91,3 +91,5 @@ secrets:
     file: db/db_password.txt
   web-secret-key:
     file: web/web_secret_key.txt
+  web-csrf-secret-key:
+    file: web/web_csrf_secret_key.txt

@@ -2,58 +2,61 @@
 {% set active_page = "profile" %}
 {% block title %}Profile{% endblock %}
 {% block content %}
-  <div class="grid grid-cols-12 gap-8">
+  <main class="grid grid-cols-12 gap-8">
     {% if not user.is_admin() %}
       <div class="card shadow-2xl sm:col-span-7 col-span-full">
-        <form id="issue-form" method="POST" action="{{ url_for('post_issue', uid=user.uid)|urlencode }}" class="card-body">
-          <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-            <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Issue a certificate</h2>
-          </div>
+        <div class="card-body">
+          <form id="issue-form" method="POST" action="{{ url_for('post_issue', uid=user.uid)|urlencode }}">
+            <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+              <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Issue a certificate</h2>
+            </div>
 
-          <div class="w-full mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-10">
-            <div class="form-control col-span-full">
-              <label for="uid" class="label pt-0">
-                <span class="label-text font-medium leading-6">User ID</span>
-              </label>
-              <div class="input input-bordered input-sm flex">
-                <span class="flex select-none items-center text-gray-500 sm:text-sm">imovies.ch/profile/</span>
-                <input type="text" id="uid" name="uid" value="{{ user.uid }}" class="block flex-1 border-0 bg-transparent py-1.5" disabled>
+            <div class="w-full mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-10">
+              <div class="form-control col-span-full">
+                <label for="uid" class="label pt-0">
+                  <span class="label-text font-medium leading-6">User ID</span>
+                </label>
+                <div class="input input-bordered input-sm flex">
+                  <span class="flex select-none items-center text-gray-500 sm:text-sm">imovies.ch/profile/</span>
+                  <input type="text" id="uid" name="uid" value="{{ user.uid }}" class="block flex-1 border-0 bg-transparent py-1.5" disabled>
+                </div>
+              </div>
+
+              <div class="form-control sm:col-span-4">
+                <label for="email" class="label pt-0">
+                  <span class="label-text font-medium leading-6">Email address</span>
+                </label>
+                <input type="email" id="email" name="email" value="{{ user.email }}" class="input input-bordered input-sm">
+              </div>
+
+              <div class="form-control sm:col-span-3">
+                <label for="firstname" class="label pt-0">
+                  <span class="label-text font-medium leading-6">First name</span>
+                </label>
+                <input type="text" id="firstname" name="firstname" value="{{ user.firstname }}" class="input input-bordered input-sm">
+              </div>
+
+              <div class="form-control sm:col-span-3">
+                <label for="lastname" class="label pt-0">
+                  <span class="label-text font-medium leading-6">Last name</span>
+                </label>
+                <input type="text" id="lastname" name="lastname" value="{{ user.lastname }}" class="input input-bordered input-sm">
+              </div>
+
+              <div class="form-control col-span-full">
+                <label for="passphrase" class="label pt-0">
+                  <span class="label-text font-medium leading-6">Certificate passphrase</span>
+                </label>
+                <input type="password" id="passphrase" name="passphrase" class="input input-bordered input-sm">
               </div>
             </div>
 
-            <div class="form-control sm:col-span-4">
-              <label for="email" class="label pt-0">
-                <span class="label-text font-medium leading-6">Email address</span>
-              </label>
-              <input type="email" id="email" name="email" value="{{ user.email }}" class="input input-bordered input-sm">
+            <div class="mt-6 flex items-center justify-end gap-x-6">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button id="issue-submit" class="btn btn-primary btn-sm">Download</button>
             </div>
-
-            <div class="form-control sm:col-span-3">
-              <label for="firstname" class="label pt-0">
-                <span class="label-text font-medium leading-6">First name</span>
-              </label>
-              <input type="text" id="firstname" name="firstname" value="{{ user.firstname }}" class="input input-bordered input-sm">
-            </div>
-
-            <div class="form-control sm:col-span-3">
-              <label for="lastname" class="label pt-0">
-                <span class="label-text font-medium leading-6">Last name</span>
-              </label>
-              <input type="text" id="lastname" name="lastname" value="{{ user.lastname }}" class="input input-bordered input-sm">
-            </div>
-
-            <div class="form-control col-span-full">
-              <label for="passphrase" class="label pt-0">
-                <span class="label-text font-medium leading-6">Certificate passphrase</span>
-              </label>
-              <input type="password" id="passphrase" name="passphrase" class="input input-bordered input-sm">
-            </div>
-          </div>
-
-          <div class="mt-6 flex items-center justify-end gap-x-6">
-            <button id="issue-submit" class="btn btn-primary btn-sm">Download</button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
 
       <div class="card shadow-2xl sm:col-span-5 col-span-full">
@@ -80,6 +83,7 @@
             </div>
 
             <div class="mt-6 flex items-center justify-end gap-x-6">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button id="issue-submit" class="btn btn-primary btn-sm">Save</button>
             </div>
           </form>
@@ -134,6 +138,7 @@
 
                 {% if not user.is_admin() %}
                   <div class="mt-6 flex items-center justify-end gap-x-6">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button id="revoke-submit" class="btn btn-primary btn-sm" {% if user.is_admin() %}disabled{% endif %}>Revoke selected</button>
                   </div>
                 {% endif %}
@@ -164,11 +169,12 @@
             </div>
 
             <div class="mt-6 flex items-center justify-end gap-x-6">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button id="renew-submit" class="btn btn-primary btn-sm">Submit</button>
             </div>
           </form>
         </div>
       </div>
     {% endif %}
-  </div>
+  </main>
 {% endblock %}

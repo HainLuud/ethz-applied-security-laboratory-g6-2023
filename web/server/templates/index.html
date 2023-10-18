@@ -2,13 +2,13 @@
 {% set active_page = "index" %}
 {% block title %}Home{% endblock %}
 {% block content %}
-  <div class="hero card flex-shrink-0 w-full mx-auto shadow-2xl py-8">
-    <div class="hero-content text-center">
-      <div class="max-w-md">
-        <h1 class="text-5xl font-bold">Welcome</h1>
-        <p class="py-6">Hello{% if g.user.firstname and g.user.lastname %}, {{ g.user.firstname }} {{ g.user.lastname }}{% endif %}. This is the iMovies Certificate Center.</p>
+  <main class="card grid min-h-full place-items-center px-6 py-24 sm:py-32 lg:px-8 flex-shrink-0 w-full mx-auto shadow-2xl py-8">
+    <div class="card-body text-center">
+      <h1 class="mt-4 text-3xl font-bold tracking-tight sm:text-5xl">Welcome</h1>
+      <p class="mt-6 text-base leading-7">Hello{% if g.user.firstname and g.user.lastname %}, {{ g.user.firstname }} {{ g.user.lastname }}{% endif %}. This is the iMovies Certificate Center.</p>
+      <div class="mt-10 flex items-center justify-center gap-x-6">
         <a href="{{ url_for('get_crl') }}" class="btn btn-primary">Download Certificate Revocation List</a>
       </div>
     </div>
-  </div>
+  </main>
 {% endblock %}

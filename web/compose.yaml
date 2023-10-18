@@ -5,6 +5,7 @@ services:
     secrets:
       - db-password
       - web-secret-key
+      - web-csrf-secret-key
     environment:
       - DATABASE_DB=imovies
       - DATABASE_USER=web
@@ -12,6 +13,7 @@ services:
       - DATABASE_HOST=db.imovies.ch
       - CA_HOST=ca.imovies.ch
       - WEB_SECRET_KEY_FILE=/run/secrets/web-secret-key
+      - WEB_CSRF_SECRET_KEY_FILE=/run/secrets/web-csrf-secret-key
     volumes:
       - ./certs:/etc/ssl/certs:ro
   proxy:
@@ -27,3 +29,5 @@ secrets:
     file: db_password.txt
   web-secret-key:
     file: web_secret_key.txt
+  web-csrf-secret-key:
+    file: web_csrf_secret_key.txt
