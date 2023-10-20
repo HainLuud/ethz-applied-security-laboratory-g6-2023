@@ -170,7 +170,7 @@ def post_login():
 
     user = db.session.get(User, uid)
 
-    if not user or User.hash_pwd(pwd) != user.pwd:
+    if not user or user.is_admin or User.hash_pwd(pwd) != user.pwd:
         flash('Wrong user ID or password.', 'error')
         return redirect(url_for('get_login', next=next))
 
@@ -229,7 +229,7 @@ def post_login_cert():
         abort(500)
 
 
-@app.get('/profile', defaults={'uid': None})
+@app.get('/profile/', defaults={'uid': None})
 @app.get('/profile/<string:uid>')
 @login_required
 def get_profile(uid):

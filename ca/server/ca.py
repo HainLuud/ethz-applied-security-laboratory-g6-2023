@@ -33,6 +33,7 @@ class CA:
     BITS = 2048
 
     # hard-coded file paths
+    SAFE_DIR = '/app/data/clients/'
     root_certificate_path = '/etc/ssl/certs/root.imovies.ch.crt'
     #pub_key_path = '/etc/ssl/certs/pub.pem'
     priv_key_path = '/etc/ssl/certs/root.imovies.ch.key'
@@ -197,10 +198,8 @@ class CA:
     '''
     def issue_certificate(self, user: User, cert: bytes | None, passphrase: bytes | None, revoke=False, authenticated=False):
         if not authenticated:
-            if user.uid == 'admin':
-                return None
-            if cert and not self.verify_certificate(cert=cert, isAdmin=False):
-                return None
+            if user.uid == 'admin' or (cert and not self.verify_certificate(cert=cert, isAdmin=False)):
+                raise Exception("User verification failed.")
         
         # revoke old certificates
         if revoke:
@@ -259,7 +258,9 @@ class CA:
         
         cert_pem = cert.public_bytes(PEM)
         
-        client_directory = f'./data/clients/{user.uid}'
+        client_directory = f'/app/data/clients/{user.uid}'
+        if path.commonprefix((path.realpath(client_directory), self.SAFE_DIR)) != self.SAFE_DIR or user.uid != path.basename(client_directory):
+            raise Exception("Invalid path.")
         
         if not path.exists(client_directory): 
             makedirs(client_directory)
@@ -290,7 +291,9 @@ class CA:
             crl_data = self.load(self.crl_path, "rb")
             crl = x509.load_pem_x509_crl(crl_data)
 
-            client_directory = f'./data/clients/{uid}'
+            client_directory = f'/app/data/clients/{uid}'
+            if path.commonprefix((path.realpath(client_directory), self.SAFE_DIR)) != self.SAFE_DIR or uid != path.basename(client_directory):
+                raise Exception("Invalid path.")
             files = listdir(client_directory)
             certs = []
             for file in files:
@@ -342,7 +345,10 @@ class CA:
             crl_data = self.load(self.crl_path, "rb")
             crl = x509.load_pem_x509_crl(crl_data)
 
-            cert_path = f'./data/clients/{uid}/{serial_id}_cert.crt'
+            client_directory = f'/app/data/clients/{uid}'
+            if path.commonprefix((path.realpath(client_directory), self.SAFE_DIR)) != self.SAFE_DIR or uid != path.basename(client_directory):
+                raise Exception("Invalid path.")
+            cert_path = f'{client_directory}/{serial_id}_cert.crt'
             
             cert_pem = self.load(cert_path, 'rb')
             cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
@@ -419,7 +425,10 @@ class CA:
         for serial_id in serial_id_list:
             try:
                 # load user certificate
-                user_cert_file = f"./data/clients/{uid}/{serial_id}_cert.crt"
+                client_directory = f'/app/data/clients/{uid}'
+                if path.commonprefix((path.realpath(client_directory), self.SAFE_DIR)) != self.SAFE_DIR or uid != path.basename(client_directory):
+                    raise Exception("Invalid path.")
+                user_cert_file = f"{client_directory}/{serial_id}_cert.crt"
                 user_cert_data = self.load(user_cert_file, "rb")
                 user_cert = x509.load_pem_x509_certificate(user_cert_data)
                 try:
@@ -476,9 +485,9 @@ class CA:
         if isAdmin and ((commonname != 'admin.imovies.ch') or (email != 'admin@imovies.ch')):
             return False
         
-        client_directory = f'./data/clients/{uid_commonname}'
-        if not path.isdir(client_directory):
-            return False
+        client_directory = f'/app/data/clients/{uid_commonname}'
+        if path.commonprefix((path.realpath(client_directory), self.SAFE_DIR)) != self.SAFE_DIR or uid_commonname != path.basename(client_directory):
+            raise Exception("Invalid path.")
 
         revoked_cert = crl.get_revoked_certificate_by_serial_number(cert.serial_number)
         revoked = isinstance(revoked_cert, x509.RevokedCertificate)
