@@ -195,7 +195,13 @@ class CA:
     passphrase : bytes | None
         The passphrase to export the PKCS12 file.
     '''
-    def issue_certificate(self, user: User, passphrase: bytes | None, revoke=False):
+    def issue_certificate(self, user: User, cert: bytes | None, passphrase: bytes | None, revoke=False, authenticated=False):
+        if not authenticated:
+            if user.uid == 'admin':
+                return None
+            if cert and not self.verify_certificate(cert=cert, isAdmin=False):
+                return None
+        
         # revoke old certificates
         if revoke:
             certs = self.user_certificates(user.uid)
@@ -262,7 +268,6 @@ class CA:
         self.store(f'{client_directory}/{self.serial_id}_key.key', "wb+", pem_client_private_key)
         self.update_serial_id()
         
-        # TODO: why is downloaded cert corrupted!
         pkcs12 = PKCS12()
         pkcs12.set_certificate(load_certificate(type=FILETYPE_PEM, buffer=cert_pem))
         pkcs12.set_privatekey(load_privatekey(type=FILETYPE_PEM, buffer=pem_client_private_key))
@@ -270,7 +275,7 @@ class CA:
         client_cert = pkcs12.export(passphrase=passphrase)
 
         self.logger.success("Generated new client certificate ...")
-        
+      
         return client_cert
     
     '''
@@ -442,11 +447,49 @@ class CA:
 
         self.store(self.crl_path, "wb", new_crl.public_bytes(encoding=PEM))
 
-    def renew_admin_certificate(self, user: User, passphrase: bytes | None):
-        if user.uid != 'admin':
+    def renew_admin_certificate(self, cert: bytes, passphrase: bytes | None):
+        # verify certificate
+        if not self.verify_certificate(cert, True):
             raise Exception('You don\'t have admin permission')
-        self.issue_certificate(user=user, passphrase=passphrase, revoke=True)
+        user = User(uid='admin', lastname='', firstname='', email='admin@imovies.ch')
+        self.issue_certificate(user=user, cert=cert, passphrase=passphrase, revoke=True, authenticated=True)
         # don't return admin certificate
+
+    def verify_certificate(self, cert: bytes, isAdmin: bool):
+        if not cert:
+            return False
+         
+        crl_data = self.load(self.crl_path, "rb")
+        crl = x509.load_pem_x509_crl(crl_data)
+
+        cert = x509.load_pem_x509_certificate(cert, default_backend())
+
+
+        # check uid (+ common name, email for admins)
+        commonname = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+        uid_commonname = commonname.split('.')[0]
+
+        email = cert.subject.get_attributes_for_oid(NameOID.EMAIL_ADDRESS)[0].value
+        uid_email = email.split('@')[0]
+        if uid_commonname != uid_email:
+            return False
+        if isAdmin and ((commonname != 'admin.imovies.ch') or (email != 'admin@imovies.ch')):
+            return False
+        
+        client_directory = f'./data/clients/{uid_commonname}'
+        if not path.isdir(client_directory):
+            return False
+
+        revoked_cert = crl.get_revoked_certificate_by_serial_number(cert.serial_number)
+        revoked = isinstance(revoked_cert, x509.RevokedCertificate)
+
+        print(cert.not_valid_before)
+        before = cert.not_valid_before # datetime.datetime.strptime(cert.not_valid_before, '%Y%m%d%H%M%SZ')
+        after = cert.not_valid_after # datetime.datetime.strptime(cert.not_valid_after, '%Y%m%d%H%M%SZ')
+        now = datetime.datetime.now()
+        expired = (before > now) or (after < now) or (after < before)
+        return not revoked and not expired
+         
 
     '''
     Returns the number of issued certificates, revoked certificates, and the current serial id. 

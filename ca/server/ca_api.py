@@ -34,8 +34,11 @@ def issue_certificate():
         
         passphrase = data['passphrase'].encode()
         revoke = data['revoke']
+        cert = None
+        if data['cert_data']:
+            cert = data['cert_data'].encode()
         
-        cert = ca.issue_certificate(user, passphrase, revoke)
+        cert = ca.issue_certificate(user, cert, passphrase, revoke)
         cert_b64 = base64.b64encode(cert).decode('utf-8')
 
         return jsonify({"status": "success", "certificate": cert_b64})
@@ -48,15 +51,12 @@ def issue_certificate():
 def renew_admin_certificate():
     try:
         data = request.json
-        uid = 'admin'
-        lastname = None
-        firstname = None
-        email = 'admin@imovies.ch'
-        user = User(uid, lastname, firstname, email)
-        
         passphrase = data['passphrase'].encode()
-        
-        ca.renew_admin_certificate(user, passphrase)
+        cert = None
+        if data['cert_data']:
+            cert = data['cert_data'].encode()
+
+        ca.renew_admin_certificate(cert, passphrase)
 
         return jsonify({"status": "success", "message": "Successfully renewed admin certificate. Please contact CA to retrieve the certificate."})
     
