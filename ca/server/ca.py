@@ -289,6 +289,8 @@ class CA:
             files = listdir(client_directory)
             certs = []
             for file in files:
+                if '.key' in file:
+                    continue
                 cert_pem = self.load(f'{client_directory}/{file}', 'rb')
                 cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
 
