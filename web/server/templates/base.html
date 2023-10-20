@@ -2,7 +2,7 @@
   {% set navigation_bar = [
     (url_for('index'), 'index', 'Home', true),
     (url_for('get_profile'), 'profile', 'Profile', true),
-    (url_for('get_admin'), 'admin', 'Administration', g.user.is_admin()),
+    (url_for('get_admin'), 'admin', 'Administration', g.user.is_admin),
     (url_for('get_logout'), 'logout', 'Log out', true),
   ] -%}
 {% endif %}

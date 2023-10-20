@@ -3,7 +3,7 @@
 {% block title %}Profile{% endblock %}
 {% block content %}
   <main class="grid grid-cols-12 gap-8">
-    {% if not user.is_admin() %}
+    {% if not user.is_admin %}
       <div class="card shadow-2xl sm:col-span-7 col-span-full">
         <div class="card-body">
           <form id="issue-form" method="POST" action="{{ url_for('post_issue', uid=user.uid)|urlencode }}">
@@ -91,7 +91,7 @@
       </div>
     {% endif %}
 
-    <div class="card shadow-2xl {% if user.is_admin() %}sm:col-span-7{% endif %} col-span-full">
+    <div class="card shadow-2xl {% if user.is_admin %}sm:col-span-7{% endif %} col-span-full">
       <div class="card-body">
         <div class="sm:mx-auto sm:w-full sm:max-w-sm">
           <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Certificates</h2>
@@ -120,7 +120,7 @@
                         <tr>
                           <td>
                             <label>
-                              <input type="checkbox" name="serial_id_list" value="{{ certificate.serial_id }}" class="checkbox checkbox" {% if certificate.revoked %}checked{% endif %} {% if user.is_admin() or certificate.revoked %}disabled{% endif %}>
+                              <input type="checkbox" name="serial_id_list" value="{{ certificate.serial_id }}" class="checkbox checkbox" {% if certificate.revoked %}checked{% endif %} {% if user.is_admin or certificate.revoked %}disabled{% endif %}>
                             </label>
                           </td>
                           <td>{{ certificate.serial_id }}</td>
@@ -136,10 +136,10 @@
                   </table>
                 </div>
 
-                {% if not user.is_admin() %}
+                {% if not user.is_admin %}
                   <div class="mt-6 flex items-center justify-end gap-x-6">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button id="revoke-submit" class="btn btn-primary btn-sm" {% if user.is_admin() %}disabled{% endif %}>Revoke selected</button>
+                    <button id="revoke-submit" class="btn btn-primary btn-sm" {% if user.is_admin %}disabled{% endif %}>Revoke selected</button>
                   </div>
                 {% endif %}
               </div>
@@ -151,7 +151,7 @@
       </div>
     </div>
 
-    {% if user.is_admin() %}
+    {% if user.is_admin %}
       <div class="card shadow-2xl sm:col-span-5 col-span-full">
         <div class="card-body">
           <form id="renew-form" method="POST" action="{{ url_for('post_renew', uid=user.uid)|urlencode }}">
