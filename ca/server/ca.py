@@ -258,7 +258,8 @@ class CA:
         if not path.exists(client_directory): 
             makedirs(client_directory)
         
-        self.store(f'{client_directory}/{self.serial_id}_cert.pem', "wb+", cert.public_bytes(encoding=PEM))
+        self.store(f'{client_directory}/{self.serial_id}_cert.crt', "wb+", cert.public_bytes(encoding=PEM))
+        self.store(f'{client_directory}/{self.serial_id}_key.key', "wb+", pem_client_private_key)
         self.update_serial_id()
         
         # TODO: why is downloaded cert corrupted!
@@ -334,7 +335,7 @@ class CA:
             crl_data = self.load(self.crl_path, "rb")
             crl = x509.load_pem_x509_crl(crl_data)
 
-            cert_path = f'./data/clients/{uid}/{serial_id}_cert.pem'
+            cert_path = f'./data/clients/{uid}/{serial_id}_cert.crt'
             
             cert_pem = self.load(cert_path, 'rb')
             cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
@@ -411,7 +412,7 @@ class CA:
         for serial_id in serial_id_list:
             try:
                 # load user certificate
-                user_cert_file = f"./data/clients/{uid}/{serial_id}_cert.pem"
+                user_cert_file = f"./data/clients/{uid}/{serial_id}_cert.crt"
                 user_cert_data = self.load(user_cert_file, "rb")
                 user_cert = x509.load_pem_x509_certificate(user_cert_data)
                 try:

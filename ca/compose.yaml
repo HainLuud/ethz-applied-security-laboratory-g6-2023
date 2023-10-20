@@ -5,7 +5,7 @@ services:
     volumes:
       - ./certs:/etc/ssl/certs:ro
       - ca-data:/app/data
-      - ./certs/admin.imovies.ch.pem:/app/data/clients/admin/310629842216214876788742898011996388621811897248_cert.pem:ro
+      - ./certs/admin.imovies.ch.crt:/app/data/clients/admin/310629842216214876788742898011996388621811897248_cert.crt:ro
     ports:
       - "${CA_PORT}:8000"
   scheduled-backup:
