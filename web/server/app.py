@@ -145,7 +145,7 @@ def get_crl():
             raise RuntimeError(data['message'])
         crl = base64.b64decode(data['crl'].encode())
         return send_file(io.BytesIO(crl), download_name='crl.pem', mimetype='application/x-pem-file')
-    except Exception:
+    except RuntimeError:
         traceback.print_exc()
         abort(500)
 
@@ -224,7 +224,7 @@ def post_login_cert():
         session['uid'] = user.uid
         session['cert_data'] = cert_data
         return redirect(next)
-    except Exception:
+    except RuntimeError:
         traceback.print_exc()
         abort(500)
 
@@ -250,7 +250,7 @@ def get_profile(uid):
         if data['status'] != 'success':
             raise RuntimeError(data['message'])
         certificates = data['certificates']
-    except Exception:
+    except RuntimeError:
         traceback.print_exc()
         certificates = None
 
@@ -329,7 +329,7 @@ def post_issue(uid):
             raise RuntimeError(data['message'])
         certificate = base64.b64decode(data['certificate'].encode())
         return send_file(io.BytesIO(certificate), download_name='cert.p12', mimetype='application/x-pkcs12')
-    except Exception:
+    except RuntimeError:
         traceback.print_exc()
         abort(500)
 
@@ -364,7 +364,7 @@ def post_revoke(uid):
             raise RuntimeError(data['message'])
         flash('Certificates revoked.', 'info')
         return redirect(url_for('get_profile', uid=user.uid))
-    except Exception:
+    except RuntimeError:
         traceback.print_exc()
         abort(500)
 
@@ -393,7 +393,7 @@ def post_renew(uid):
             raise RuntimeError(data['message'])
         flash('Certificate renewed.', 'info')
         return redirect(url_for('get_profile', uid=user.uid))
-    except Exception:
+    except RuntimeError:
         traceback.print_exc()
         abort(500)
 
@@ -406,7 +406,7 @@ def get_admin():
         data = response.json()
         if data['status'] != 'success':
             raise RuntimeError(data['message'])
-    except Exception:
+    except RuntimeError:
         traceback.print_exc()
         data = {}
 

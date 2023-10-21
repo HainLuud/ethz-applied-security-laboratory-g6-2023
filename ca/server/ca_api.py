@@ -11,8 +11,7 @@ Authors:
 import traceback
 from flask import Flask, jsonify, request
 import base64
-from ca import CA
-from user import User
+from ca import CA, User
 
 app = Flask(__name__)
 
@@ -26,11 +25,7 @@ def hello():
 def issue_certificate():
     try:
         data = request.json
-        uid = data['uid']
-        lastname = data['lastname']
-        firstname = data['firstname']
-        email = data['email']
-        user = User(uid, lastname, firstname, email)
+        user = User.from_dict(data)
         
         passphrase = data['passphrase'].encode()
         revoke = data['revoke']
@@ -117,9 +112,9 @@ def revoke_certificate():
 @app.route('/ca_status', methods=['GET'])
 def get_ca_status():
     try:
-        n_issued, n_revoked, next_serial_id = ca.get_status()
+        n_issued, n_revoked, next_serial_id, backup_status = ca.get_status()
         
-        return jsonify({"status": "success", "n_issued": n_issued, "n_revoked": n_revoked, "next_serial_id": next_serial_id})
+        return jsonify({"status": "success", "n_issued": n_issued, "n_revoked": n_revoked, "next_serial_id": next_serial_id, "backup_status": backup_status})
     
     except Exception as e:
         traceback.print_exc()

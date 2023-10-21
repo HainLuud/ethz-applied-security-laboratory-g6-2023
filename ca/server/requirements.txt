@@ -1,6 +1,7 @@
-cryptography
-flask
-gunicorn
-pyopenssl
-requests
-rfc5424-logging-handler
+Flask==3.0.0
+cryptography==41.0.4
+gunicorn==21.2.0
+pydash==5.1.2
+pyOpenSSL==23.2.0
+requests==2.31.0
+rfc5424-logging-handler==1.4.3

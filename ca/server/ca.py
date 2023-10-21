@@ -7,6 +7,7 @@ Authors:
 - Hain Luud (haluud@student.ethz.ch)
 '''
 
+from dataclasses import dataclass
 import socket
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, PublicFormat, NoEncryption, BestAvailableEncryption, load_pem_private_key
@@ -15,10 +16,10 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 import datetime
-from os import urandom, path, makedirs, listdir
+from os import urandom, path, makedirs, listdir, system
+import pydash
 from logger import Logger
 from rfc5424logging import Rfc5424SysLogHandler
-from user import User
 from OpenSSL.crypto import PKCS12, FILETYPE_PEM, load_certificate, load_privatekey 
 
 # public constants
@@ -26,6 +27,20 @@ PEM = Encoding.PEM
 PKCS8 = PrivateFormat.PKCS8
 SubjectPublicKeyInfo = PublicFormat.SubjectPublicKeyInfo
 TraditionalOpenSSL = PrivateFormat.TraditionalOpenSSL
+
+@dataclass
+class User:
+    uid: str = ''
+    lastname: str = ''
+    firstname: str = ''
+    email: str = ''
+
+    @staticmethod
+    def from_dict(data):
+        user = User()
+        for key, value in data.items():
+            pydash.set_(user, key, value)
+        return user
 
 class CA:
     # cryptography
@@ -39,6 +54,8 @@ class CA:
     priv_key_path = '/etc/ssl/certs/root.imovies.ch.key'
     serial_id_path = '/app/data/ca/serial_id.txt'
     crl_path = '/app/data/ca/crl.pem'
+
+    BACKUP_ADDRESS = 'bak.imovies.ch'
 
     def __init__(self):
         # TODO: DELETE
@@ -197,6 +214,9 @@ class CA:
         The passphrase to export the PKCS12 file.
     '''
     def issue_certificate(self, user: User, cert: bytes | None, passphrase: bytes | None, revoke=False, authenticated=False):
+        if not self.get_status()[3]:
+            raise Exception("Backup server is not up.")
+
         if not authenticated:
             if user.uid == 'admin' or (cert and not self.verify_certificate(cert=cert, isAdmin=False)):
                 raise Exception("User verification failed.")
@@ -374,9 +394,8 @@ class CA:
     Generates a certificate revocation list.
     '''
     def create_crl(self):
-
         if path.exists(self.crl_path):
-            self.logger.debug("Create  already exists. Loading it.")
+            self.logger.debug("CRL already exists. Loading it.")
             return
         
         t_now = datetime.datetime.utcnow()
@@ -407,6 +426,9 @@ class CA:
         The reason for revocation.
     '''
     def revoke_certificate(self, uid : str, serial_id_list : list, reason : str):
+        if not self.get_status()[3]:
+            raise Exception("Backup server is not up.")
+
         # load certificate revocation list
         crl_data = self.load(self.crl_path, "rb")
         crl = x509.load_pem_x509_crl(crl_data)
@@ -457,6 +479,9 @@ class CA:
         self.store(self.crl_path, "wb", new_crl.public_bytes(encoding=PEM))
 
     def renew_admin_certificate(self, cert: bytes, passphrase: bytes | None):
+        if not self.get_status()[3]:
+            raise Exception("Backup server is not up.")
+
         # verify certificate
         if not self.verify_certificate(cert, True):
             raise Exception('You don\'t have admin permission')
@@ -511,7 +536,9 @@ class CA:
 
         n_revoked = len(crl)
 
-        return n_issued, n_revoked, self.serial_id
+        backup_status = system(f'ping -c 1 {self.BACKUP_ADDRESS}') == 0
+
+        return n_issued, n_revoked, self.serial_id, backup_status
     
     #------------helper methods------------
 

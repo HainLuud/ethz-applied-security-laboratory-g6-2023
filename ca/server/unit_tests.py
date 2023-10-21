@@ -8,8 +8,7 @@ Authors:
 '''
 import unittest, json
 
-from ca import CA
-from user import User
+from ca import CA, User
 from ca_api import app, ca
 
 # Note: disable either test or test_api
