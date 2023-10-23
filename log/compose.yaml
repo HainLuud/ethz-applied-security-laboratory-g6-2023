@@ -15,16 +15,16 @@ services:
   scheduled-backup:
     image: creativeprojects/resticprofile:latest
     restart: unless-stopped
-    environment:
-      - TZ=Etc/UTC
-    entrypoint: /bin/sh
-    command: ['-c', 'resticprofile schedule --all && crond -f']
     volumes:
       - ./profiles.yaml:/etc/resticprofile/profiles.yaml:ro
       - ./bak_repository.txt:/etc/resticprofile/bak_repository.txt:ro
       - ./bak_password.txt:/etc/resticprofile/bak_password.txt:ro
       - ./certs:/etc/ssl/certs:ro
       - log-data:/resticprofile/log-data
+    environment:
+      - TZ=Etc/UTC
+    entrypoint: /bin/sh
+    command: ['-c', 'resticprofile schedule --all && crond -f']
     user: 0:0  # 'resticprofile schedule' requires root
 volumes:
   log-data:

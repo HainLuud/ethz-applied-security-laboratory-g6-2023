@@ -85,6 +85,7 @@ volumes:
   bak-data:
   ca-data:
   db-data:
+  db-logs:
   log-data:
 secrets:
   db-root-password:

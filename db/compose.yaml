@@ -2,7 +2,6 @@ services:
   server:
     image: mysql:latest
     restart: unless-stopped
-    command: ['--ssl-ca=/etc/ssl/certs/root.imovies.ch.crt', '--ssl-cert=/etc/ssl/certs/db.imovies.ch.crt', '--ssl-key=/etc/ssl/certs/db.imovies.ch.key', '--require-secure-transport=ON']
     secrets:
       - db-root-password
       - db-password
@@ -11,15 +10,25 @@ services:
       - ./update.sql:/docker-entrypoint-initdb.d/update.sql:ro
       - ./certs:/etc/ssl/certs:ro
       - db-data:/var/lib/mysql
+      - db-logs:/var/lib/mysql-files
     environment:
       - MYSQL_DATABASE=imovies
       - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db-root-password
       - MYSQL_USER=web
       - MYSQL_PASSWORD_FILE=/run/secrets/db-password
+    command:
+      - --default-authentication-plugin=caching_sha2_password
+      - --ssl-ca=/etc/ssl/certs/root.imovies.ch.crt
+      - --ssl-cert=/etc/ssl/certs/db.imovies.ch.crt
+      - --ssl-key=/etc/ssl/certs/db.imovies.ch.key
+      - --require-secure-transport=ON
+      - --log-error=/var/lib/mysql-files/error.log
+      - --general-log=1
+      - --general-log-file=/var/lib/mysql-files/general.log
     ports:
       - "${DB_PORT}:3306"
     healthcheck:
-      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 --password="$$(cat /run/secrets/db-root-password)" --silent']
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u root --password="$$(cat /run/secrets/db-root-password)" --silent']
       interval: 3s
       retries: 5
       start_period: 30s
@@ -27,16 +36,17 @@ services:
   scheduled-backup:
     image: creativeprojects/resticprofile:latest
     restart: unless-stopped
-    environment:
-      - TZ=Etc/UTC
-    entrypoint: /bin/sh
-    command: ['-c', 'resticprofile schedule --all && crond -f']
     volumes:
       - ./profiles.yaml:/etc/resticprofile/profiles.yaml:ro
       - ./bak_repository.txt:/etc/resticprofile/bak_repository.txt:ro
       - ./bak_password.txt:/etc/resticprofile/bak_password.txt:ro
       - ./certs:/etc/ssl/certs:ro
       - db-data:/resticprofile/db-data
+      - db-logs:/resticprofile/db-logs
+    environment:
+      - TZ=Etc/UTC
+    entrypoint: /bin/sh
+    command: ['-c', 'resticprofile schedule --all && crond -f']
     user: 0:0  # 'resticprofile schedule' requires root
 secrets:
   db-root-password:
@@ -45,3 +55,4 @@ secrets:
     file: db_password.txt
 volumes:
   db-data:
+  db-logs:
