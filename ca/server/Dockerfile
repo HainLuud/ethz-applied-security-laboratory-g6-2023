@@ -42,8 +42,8 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     python -m pip install -r requirements.txt
 
 # Create the volume mountpoint.
-RUN mkdir /app/data \
-    && chown appuser:appuser /app/data
+RUN mkdir -p /app/data /app/data/clients/admin \
+    && chown -R appuser:appuser /app/data
 
 # Mount the volume.
 VOLUME /app/data
