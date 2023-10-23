@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import base64
-import hashlib
 import io
 import os
 import re
@@ -10,6 +9,7 @@ import urllib.parse
 from datetime import timedelta
 from functools import wraps
 
+import bcrypt
 import requests
 from cryptography import x509
 from cryptography.x509.oid import NameOID
@@ -63,7 +63,6 @@ class User(db.Model):
 
     @property
     def name(self) -> str:
-        '''Backdoor 1'''
         if self.firstname and self.lastname:
             name = f'{self.firstname} {self.lastname}'
         elif self.firstname:
@@ -74,9 +73,11 @@ class User(db.Model):
             name = self.uid
         return render_template_string(name)
 
-    @staticmethod
-    def hash_pwd(pwd: str) -> str:
-        return hashlib.sha256(pwd.encode()).hexdigest()
+    def update_pwd(self, pwd: str) -> str:
+        return bcrypt.hashpw(pwd.encode(), bcrypt.gensalt())
+
+    def check_pwd(self, pwd: str) -> bool:
+        return bcrypt.checkpw(pwd.encode(), self.pwd.encode())
 
 
 def login_required(f):
@@ -171,7 +172,7 @@ def post_login():
 
     user = db.session.get(User, uid)
 
-    if not user or user.is_admin or User.hash_pwd(pwd) != user.pwd:
+    if not user or user.is_admin or not user.check_pwd(pwd):
         flash('Wrong user ID or password.', 'error')
         return redirect(url_for('get_login', next=next))
 
@@ -279,7 +280,7 @@ def post_change_password(uid):
         flash('The passwords provided are different.', 'error')
         return redirect(url_for('get_profile', uid=user.uid))
 
-    user.pwd = User.hash_pwd(pwd)
+    user.update_pwd(pwd)
 
     db.session.commit()
 
