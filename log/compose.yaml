@@ -2,15 +2,21 @@ services:
   server:
     build:
       context: .
+    restart: unless-stopped
     volumes:
       - ./rsyslog.conf:/etc/rsyslog.conf:ro
       - ./certs:/etc/ssl/certs:ro
       - log-data:/logs
+    environment:
+      - CONTAINER_SILENT=on
     ports:
       - 6514:6514
-    restart: unless-stopped
+    user: 1000:1000
   scheduled-backup:
     image: creativeprojects/resticprofile:latest
+    restart: unless-stopped
+    environment:
+      - TZ=Etc/UTC
     entrypoint: /bin/sh
     command: ['-c', 'resticprofile schedule --all && crond -f']
     volumes:
@@ -19,7 +25,6 @@ services:
       - ./bak_password.txt:/etc/resticprofile/bak_password.txt:ro
       - ./certs:/etc/ssl/certs:ro
       - log-data:/resticprofile/log-data
-    environment:
-      - TZ=Etc/UTC
+    user: 0:0  # 'resticprofile schedule' requires root
 volumes:
   log-data:

@@ -1,7 +1,7 @@
 services:
   server:
     image: mysql:latest
-    restart: always
+    restart: unless-stopped
     command: ['--ssl-ca=/etc/ssl/certs/root.imovies.ch.crt', '--ssl-cert=/etc/ssl/certs/db.imovies.ch.crt', '--ssl-key=/etc/ssl/certs/db.imovies.ch.key', '--require-secure-transport=ON']
     secrets:
       - db-root-password
@@ -23,8 +23,12 @@ services:
       interval: 3s
       retries: 5
       start_period: 30s
+    user: 999:999
   scheduled-backup:
     image: creativeprojects/resticprofile:latest
+    restart: unless-stopped
+    environment:
+      - TZ=Etc/UTC
     entrypoint: /bin/sh
     command: ['-c', 'resticprofile schedule --all && crond -f']
     volumes:
@@ -33,8 +37,7 @@ services:
       - ./bak_password.txt:/etc/resticprofile/bak_password.txt:ro
       - ./certs:/etc/ssl/certs:ro
       - db-data:/resticprofile/db-data
-    environment:
-      - TZ=Etc/UTC
+    user: 0:0  # 'resticprofile schedule' requires root
 secrets:
   db-root-password:
     file: db_root_password.txt

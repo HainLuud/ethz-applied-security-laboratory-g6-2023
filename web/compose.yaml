@@ -2,6 +2,7 @@ services:
   server:
     build:
       context: server
+    restart: unless-stopped
     secrets:
       - db-password
       - web-secret-key
@@ -10,20 +11,24 @@ services:
       - DATABASE_DB=imovies
       - DATABASE_USER=web
       - DATABASE_PASSWORD_FILE=/run/secrets/db-password
-      - DATABASE_HOST=db.imovies.ch
-      - CA_HOST=ca.imovies.ch
+      - DATABASE_HOST=db.imovies.ch:3306
+      - CA_HOST=ca.imovies.ch:443
       - WEB_SECRET_KEY_FILE=/run/secrets/web-secret-key
       - WEB_CSRF_SECRET_KEY_FILE=/run/secrets/web-csrf-secret-key
     volumes:
       - ./certs:/etc/ssl/certs:ro
+    user: 10001:10001
   proxy:
-    image: nginx:latest
-    restart: always
+    image: nginxinc/nginx-unprivileged:latest
+    restart: unless-stopped
+    environment:
+      - WEB_SERVER_HOST=server:8000
     ports:
-      - "${WEB_PORT}:443"
+      - "${WEB_PORT}:8000"
     volumes:
-      - ./proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./proxy/default.conf.template:/etc/nginx/templates/default.conf.template:ro
       - ./certs:/etc/ssl/certs:ro
+    user: 101:101
 secrets:
   db-password:
     file: db_password.txt

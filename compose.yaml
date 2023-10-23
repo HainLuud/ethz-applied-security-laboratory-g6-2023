@@ -72,6 +72,8 @@ services:
     extends:
       file: web/compose.yaml
       service: proxy
+    environment:
+      - WEB_SERVER_HOST=web-server:8000
     networks:
       - backend
     depends_on:

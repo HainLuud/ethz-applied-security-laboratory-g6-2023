@@ -1,13 +1,16 @@
 services:
   server:
-    image: restic/rest-server:latest
+    build:
+      context: .
+    restart: unless-stopped
     volumes:
       - ./certs:/etc/ssl/certs:ro
-      - bak-data:/data
-      - ./.htpasswd:/data/.htpasswd:ro
+      - bak-data:/app/data
+      - ./.htpasswd:/app/data/.htpasswd:ro
     environment:
-      - 'OPTIONS=--append-only --private-repos --tls --tls-cert /etc/ssl/certs/bak.imovies.ch.crt --tls-key /etc/ssl/certs/bak.imovies.ch.key'
+      - OPTIONS=--append-only --private-repos --tls --tls-cert /etc/ssl/certs/bak.imovies.ch.crt --tls-key /etc/ssl/certs/bak.imovies.ch.key
     ports:
       - "${BAK_PORT}:8000"
+    user: 10001:10001
 volumes:
   bak-data:

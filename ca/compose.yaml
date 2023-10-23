@@ -2,14 +2,19 @@ services:
   server:
     build:
       context: server
+    restart: unless-stopped
     volumes:
       - ./certs:/etc/ssl/certs:ro
       - ca-data:/app/data
       - ./certs/admin.imovies.ch.crt:/app/data/clients/admin/310629842216214876788742898011996388621811897248_cert.crt:ro
     ports:
       - "${CA_PORT}:8000"
+    user: 10001:10001
   scheduled-backup:
     image: creativeprojects/resticprofile:latest
+    restart: unless-stopped
+    environment:
+      - TZ=Etc/UTC
     entrypoint: /bin/sh
     command: ['-c', 'resticprofile schedule --all && crond -f']
     volumes:
@@ -18,7 +23,6 @@ services:
       - ./bak_password.txt:/etc/resticprofile/bak_password.txt:ro
       - ./certs:/etc/ssl/certs:ro
       - ca-data:/resticprofile/ca-data
-    environment:
-      - TZ=Etc/UTC
+    user: 0:0  # 'resticprofile schedule' requires root
 volumes:
   ca-data:

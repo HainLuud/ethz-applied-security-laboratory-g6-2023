@@ -4,7 +4,7 @@
 # If you need more help, visit the Dockerfile reference guide at
 # https://docs.docker.com/engine/reference/builder/
 
-ARG PYTHON_VERSION=3.11.5
+ARG PYTHON_VERSION=3.11
 
 FROM node:latest as build
 
@@ -53,7 +53,8 @@ USER appuser
 # Copy the source code into the container.
 COPY . .
 
-COPY --from=build /app/static /app/static
+# Copy the artifacts into the container.
+COPY --from=build /app/static ./static
 
 # Expose the port that the application listens on.
 EXPOSE 8000

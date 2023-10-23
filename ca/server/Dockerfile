@@ -4,11 +4,8 @@
 # If you need more help, visit the Dockerfile reference guide at
 # https://docs.docker.com/engine/reference/builder/
 
-ARG PYTHON_VERSION=3.11.5
+ARG PYTHON_VERSION=3.11
 FROM python:${PYTHON_VERSION}-slim as base
-
-# Installs system packages
-RUN apt-get update -y && apt-get install -y iputils-ping
 
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -30,7 +27,11 @@ RUN adduser \
     --no-create-home \
     --uid "${UID}" \
     appuser
-RUN mkdir -p ./data/ca ./data/clients/admin && chown -R appuser ./data
+
+# Install system packages.
+RUN apt-get update -y \
+    && apt-get install -y \
+    iputils-ping
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.
@@ -39,6 +40,13 @@ RUN mkdir -p ./data/ca ./data/clients/admin && chown -R appuser ./data
 RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,source=requirements.txt,target=requirements.txt \
     python -m pip install -r requirements.txt
+
+# Create the volume mountpoint.
+RUN mkdir /app/data \
+    && chown appuser:appuser /app/data
+
+# Mount the volume.
+VOLUME /app/data
 
 # Switch to the non-privileged user to run the application.
 USER appuser

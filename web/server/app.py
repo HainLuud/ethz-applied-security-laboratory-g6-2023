@@ -39,6 +39,7 @@ app.config['SECRET_KEY'] = WEB_SECRET_KEY
 app.config['WTF_CSRF_SECRET_KEY'] = WEB_CSRF_SECRET_KEY
 db = SQLAlchemy(app, engine_options={
     'connect_args': {
+        'auth_plugin': 'caching_sha2_password',
         'ssl_verify_identity': True,
         'ssl_ca': '/etc/ssl/certs/root.imovies.ch.crt',
     }
