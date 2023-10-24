@@ -11,6 +11,9 @@ services:
     extends:
       file: ca/compose.yaml
       service: server
+    environment:
+      - BAK_HOST=bak.imovies.ch:8000
+      - LOG_HOST=log.imovies.ch:6514
     networks:
       backend:
         aliases:
@@ -38,6 +41,15 @@ services:
       service: scheduled-backup
     networks:
       backend:
+  db-logger:
+    extends:
+      file: db/compose.yaml
+      service: logger
+    networks:
+      backend:
+    depends_on:
+      log-server:
+        condition: service_started
   log-server:
     extends:
       file: log/compose.yaml
@@ -59,6 +71,7 @@ services:
     environment:
       - DATABASE_HOST=db.imovies.ch:3306
       - CA_HOST=ca.imovies.ch:8000
+      - LOG_HOST=log.imovies.ch:6514
     networks:
       - backend
     depends_on:

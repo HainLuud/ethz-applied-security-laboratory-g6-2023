@@ -2,6 +2,7 @@ services:
   server:
     image: mysql:latest
     restart: unless-stopped
+    hostname: db
     secrets:
       - db-root-password
       - db-password
@@ -12,6 +13,7 @@ services:
       - db-data:/var/lib/mysql
       - db-logs:/var/lib/mysql-files
     environment:
+      - TZ=Etc/UTC
       - MYSQL_DATABASE=imovies
       - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db-root-password
       - MYSQL_USER=web
@@ -36,18 +38,31 @@ services:
   scheduled-backup:
     image: creativeprojects/resticprofile:latest
     restart: unless-stopped
+    hostname: db
     volumes:
       - ./profiles.yaml:/etc/resticprofile/profiles.yaml:ro
       - ./bak_repository.txt:/etc/resticprofile/bak_repository.txt:ro
       - ./bak_password.txt:/etc/resticprofile/bak_password.txt:ro
       - ./certs:/etc/ssl/certs:ro
       - db-data:/resticprofile/db-data
-      - db-logs:/resticprofile/db-logs
     environment:
       - TZ=Etc/UTC
     entrypoint: /bin/sh
     command: ['-c', 'resticprofile schedule --all && crond -f']
-    user: 0:0  # 'resticprofile schedule' requires root
+    user: 0:0  # Requires root to run 'resticprofile schedule'
+  logger:
+    build:
+      context: logger
+    restart: unless-stopped
+    hostname: db
+    volumes:
+      - ./logger/rsyslog.conf:/etc/rsyslog.conf:ro
+      - ./certs:/etc/ssl/certs:ro
+      - db-logs:/var/log/mysql
+    environment:
+      - TZ=Etc/UTC
+      - CONTAINER_SILENT=on
+    user: 0:0  # Requires root to read db-logs
 secrets:
   db-root-password:
     file: db_root_password.txt

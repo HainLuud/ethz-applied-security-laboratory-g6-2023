@@ -3,11 +3,13 @@ services:
     build:
       context: .
     restart: unless-stopped
+    hostname: log
     volumes:
       - ./rsyslog.conf:/etc/rsyslog.conf:ro
       - ./certs:/etc/ssl/certs:ro
       - log-data:/logs
     environment:
+      - TZ=Etc/UTC
       - CONTAINER_SILENT=on
     ports:
       - 6514:6514
@@ -15,6 +17,7 @@ services:
   scheduled-backup:
     image: creativeprojects/resticprofile:latest
     restart: unless-stopped
+    hostname: log
     volumes:
       - ./profiles.yaml:/etc/resticprofile/profiles.yaml:ro
       - ./bak_repository.txt:/etc/resticprofile/bak_repository.txt:ro

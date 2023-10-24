@@ -8,7 +8,8 @@ Authors:
 '''
 
 from dataclasses import dataclass
-import socket
+import logging
+import os
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, PublicFormat, NoEncryption, BestAvailableEncryption, load_pem_private_key
 from cryptography import x509
@@ -18,8 +19,6 @@ from cryptography.hazmat.backends import default_backend
 import datetime
 from os import urandom, path, makedirs, listdir, system
 import pydash
-from logger import Logger
-from rfc5424logging import Rfc5424SysLogHandler
 from OpenSSL.crypto import PKCS12, FILETYPE_PEM, load_certificate, load_privatekey 
 
 # public constants
@@ -55,45 +54,19 @@ class CA:
     serial_id_path = '/app/data/ca/serial_id.txt'
     crl_path = '/app/data/ca/crl.pem'
 
-    BACKUP_ADDRESS = 'bak.imovies.ch'
+    # addresses
+    BACKUP_ADDRESS = os.getenv('BAK_HOST').split(':')[0]
 
     def __init__(self):
-        # TODO: DELETE
-        #self.test_logger()
-        #------------------------------------
         self.create_directories()
-        self.logger = Logger()
+        self.logger = logging.getLogger(__name__)
         self.revocation_list = []
         self.serial_id = self.get_initial_serial_id()
         self.private_key_password = urandom(64) # TODO: how to store passphrase securely
         #self.create_keypair()
-        #self.generate_root_certificate(
+        #self.generate_root_certificate()
         self.read_cert()
         self.create_crl()
-
-    def test_logger(self):
-        import logging
-        import logging.handlers
-
-        my_logger = logging.getLogger()
-        my_logger.setLevel(logging.INFO)
-
-        handler = Rfc5424SysLogHandler(
-            address=('log.imovies.ch', 6514),
-            facility=1,
-            socktype=socket.SOCK_STREAM,
-            tls_enable=True,
-            tls_verify=True,
-            tls_ca_bundle='/etc/ssl/certs/root.imovies.ch.crt'
-        )
-        print("PRINT")
-
-        my_logger.addHandler(handler)
-
-        my_logger.info('this is info')
-        my_logger.debug('this is debug')
-        my_logger.critical('this is critical')
-
         
     '''
     Creates directories on startup in case they do not exist.
@@ -134,7 +107,7 @@ class CA:
         
         #self.logger.debug(encrypted_pem_private_key.decode())
         #self.logger.debug(pem_public_key.decode())
-        self.logger.success("Generated new key pair!")
+        self.logger.info("Generated new key pair!")
 
         # write serialised keys to files
         self.store(self.priv_key_path, 'wb+', encrypted_pem_private_key)
@@ -236,7 +209,7 @@ class CA:
 
         pem_client_private_key = client_private_key.private_bytes(encoding=PEM, format=TraditionalOpenSSL,
                                                                   encryption_algorithm=NoEncryption()) # PKCS12 already uses passphrase
-        self.logger.success("Generated new client key pair!")
+        self.logger.info("Generated new client key pair!")
         self.logger.debug("Generating new client certificate ...")
         
         subject = x509.Name([
@@ -295,7 +268,7 @@ class CA:
         pkcs12.set_ca_certificates([load_certificate(type=FILETYPE_PEM, buffer=self.root_cert_pem)])
         client_cert = pkcs12.export(passphrase=passphrase)
 
-        self.logger.success("Generated new client certificate ...")
+        self.logger.info("Generated new client certificate ...")
       
         return client_cert
     

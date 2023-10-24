@@ -101,6 +101,12 @@ def admin_required(f):
 
 
 @app.before_request
+def log_request_info():
+    app.logger.debug('Headers: %s', request.headers)
+    app.logger.debug('Body: %s', request.get_data())
+
+
+@app.before_request
 def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(minutes=5)
@@ -154,10 +160,15 @@ def get_crl():
 
 @app.get('/login')
 def get_login():
-    next = request.args.get('next')
+    original_next = request.args.get('next')
+
+    next = '/' + request.args.get('next', url_for('index')).lstrip('/')
+    next = next if next != url_for('get_logout') else url_for('index')
+
+    if original_next != next:
+        return redirect(url_for('get_login', next=next))
+
     has_cert = 'HTTP_X_SSL_CERT' in request.environ
-    if not next:
-        return redirect(url_for('get_login', next=url_for('index')))
     return render_template('login.html', next=next, has_cert=has_cert)
 
 
@@ -165,7 +176,9 @@ def get_login():
 def post_login():
     uid = request.form.get('uid')
     pwd = request.form.get('pwd')
+
     next = '/' + request.form.get('next', url_for('index')).lstrip('/')
+    next = next if next != url_for('get_logout') else url_for('index')
 
     if not uid or not pwd:
         abort(400)

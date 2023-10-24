@@ -3,16 +3,22 @@ services:
     build:
       context: server
     restart: unless-stopped
+    hostname: ca
     volumes:
       - ./certs:/etc/ssl/certs:ro
       - ca-data:/app/data
       - ./certs/admin.imovies.ch.crt:/app/data/clients/admin/310629842216214876788742898011996388621811897248_cert.crt:ro
+    environment:
+      - TZ=Etc/UTC
+      - BAK_HOST=bak.imovies.ch:443
+      - LOG_HOST=log.imovies.ch:514
     ports:
       - "${CA_PORT}:8000"
     user: 10001:10001
   scheduled-backup:
     image: creativeprojects/resticprofile:latest
     restart: unless-stopped
+    hostname: ca
     volumes:
       - ./profiles.yaml:/etc/resticprofile/profiles.yaml:ro
       - ./bak_repository.txt:/etc/resticprofile/bak_repository.txt:ro

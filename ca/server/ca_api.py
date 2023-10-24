@@ -17,6 +17,11 @@ app = Flask(__name__)
 
 ca = CA()
 
+@app.before_request
+def log_request_info():
+    app.logger.debug('Headers: %s', request.headers)
+    app.logger.debug('Body: %s', request.get_data())
+
 @app.route('/')
 def hello():
     return 'Welcome to the CA interface'

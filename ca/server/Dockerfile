@@ -42,7 +42,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     python -m pip install -r requirements.txt
 
 # Create the volume mountpoint.
-RUN mkdir -p /app/data /app/data/clients/admin \
+RUN mkdir -p /app/data /app/data/ca /app/data/clients /app/data/clients/admin \
     && chown -R appuser:appuser /app/data
 
 # Mount the volume.
@@ -57,6 +57,8 @@ COPY . .
 # Expose the port that the application listens on.
 EXPOSE 8000
 
+# Test the application.
+# CMD python3 unit_tests.py
+
 # Run the application.
-# python unit_tests.py && 
-CMD gunicorn 'ca_api:app' --certfile=/etc/ssl/certs/ca.imovies.ch.crt --keyfile=/etc/ssl/certs/ca.imovies.ch.key --bind=0.0.0.0:8000
+CMD gunicorn
