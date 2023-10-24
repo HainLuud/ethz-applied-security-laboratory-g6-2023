@@ -4,7 +4,6 @@ import base64
 import io
 import os
 import re
-import traceback
 import urllib.parse
 from datetime import timedelta
 from functools import wraps
@@ -156,7 +155,7 @@ def get_crl():
         crl = base64.b64decode(data['crl'].encode())
         return send_file(io.BytesIO(crl), download_name='crl.pem', mimetype='application/x-pem-file')
     except RuntimeError:
-        traceback.print_exc()
+        app.logger.exception('')
         abort(500)
 
 
@@ -242,7 +241,7 @@ def post_login_cert():
         session['cert_data'] = cert_data
         return redirect(next)
     except RuntimeError:
-        traceback.print_exc()
+        app.logger.exception('')
         abort(500)
 
 
@@ -268,7 +267,7 @@ def get_profile(uid):
             raise RuntimeError(data['message'])
         certificates = data['certificates']
     except RuntimeError:
-        traceback.print_exc()
+        app.logger.exception('')
         certificates = None
 
     return render_template('profile.html', user=user, certificates=certificates)
@@ -347,7 +346,7 @@ def post_issue(uid):
         certificate = base64.b64decode(data['certificate'].encode())
         return send_file(io.BytesIO(certificate), download_name='cert.p12', mimetype='application/x-pkcs12')
     except RuntimeError:
-        traceback.print_exc()
+        app.logger.exception('')
         abort(500)
 
 
@@ -382,7 +381,7 @@ def post_revoke(uid):
         flash('Certificates revoked.', 'info')
         return redirect(url_for('get_profile', uid=user.uid))
     except RuntimeError:
-        traceback.print_exc()
+        app.logger.exception('')
         abort(500)
 
 
@@ -411,7 +410,7 @@ def post_renew(uid):
         flash('Certificate renewed.', 'info')
         return redirect(url_for('get_profile', uid=user.uid))
     except RuntimeError:
-        traceback.print_exc()
+        app.logger.exception('')
         abort(500)
 
 
@@ -424,7 +423,7 @@ def get_admin():
         if data['status'] != 'success':
             raise RuntimeError(data['message'])
     except RuntimeError:
-        traceback.print_exc()
+        app.logger.exception('')
         data = {}
 
     users = db.session.query(User).all()

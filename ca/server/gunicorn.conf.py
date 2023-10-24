@@ -13,7 +13,7 @@ logconfig_dict = {
     'disable_existing_loggers': False,
     'root': {
         'level': 'DEBUG',
-        'handlers': ['console']
+        'handlers': ['console', 'syslog']
     },
     'loggers': {
         'gunicorn.error': {

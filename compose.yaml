@@ -27,6 +27,9 @@ services:
       service: scheduled-backup
     networks:
       backend:
+    depends_on:
+      bak-server:
+        condition: service_started
   db-server:
     extends:
       file: db/compose.yaml
@@ -41,6 +44,9 @@ services:
       service: scheduled-backup
     networks:
       backend:
+    depends_on:
+      bak-server:
+        condition: service_started
   db-logger:
     extends:
       file: db/compose.yaml
@@ -64,6 +70,9 @@ services:
       service: scheduled-backup
     networks:
       backend:
+    depends_on:
+      bak-server:
+        condition: service_started
   web-server:
     extends:
       file: web/compose.yaml
@@ -116,7 +125,7 @@ secrets:
   ca-root-key:
     file: ca/secrets/root.imovies.ch.key
   ca-bak-repository:
-    file: ca/secrets/bak_repository.txt
+    file: secrets/ca/bak_repository.txt
   ca-bak-password:
     file: ca/secrets/bak_password.txt
   db-cert:
@@ -128,7 +137,7 @@ secrets:
   db-password:
     file: db/secrets/db_password.txt
   db-bak-repository:
-    file: db/secrets/bak_repository.txt
+    file: secrets/db/bak_repository.txt
   db-bak-password:
     file: db/secrets/bak_password.txt
   log-cert:
@@ -136,7 +145,7 @@ secrets:
   log-key:
     file: log/secrets/log.imovies.ch.key
   log-bak-repository:
-    file: log/secrets/bak_repository.txt
+    file: secrets/log/bak_repository.txt
   log-bak-password:
     file: log/secrets/bak_password.txt
   web-cert:

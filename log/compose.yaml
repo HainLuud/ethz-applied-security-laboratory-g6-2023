@@ -15,7 +15,7 @@ services:
       - TZ=Etc/UTC
       - CONTAINER_SILENT=on
     ports:
-      - 6514:6514
+      - "${LOG_PORT}:6514"
     user: 1000:1000
   scheduled-backup:
     image: creativeprojects/resticprofile:latest

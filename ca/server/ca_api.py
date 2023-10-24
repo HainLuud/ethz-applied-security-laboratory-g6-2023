@@ -8,7 +8,6 @@ Authors:
 - Alessandro Cabodi (acabodi@student.ethz.ch)
 - Hain Luud (haluud@student.ethz.ch)
 '''
-import traceback
 from flask import Flask, jsonify, request
 from flask_talisman import Talisman
 import base64
@@ -46,7 +45,7 @@ def issue_certificate():
         return jsonify({"status": "success", "certificate": cert_b64})
     
     except Exception as e:
-        traceback.print_exc()
+        app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400
 
 @app.route('/renew_admin_certificate', methods=['POST'])
@@ -63,7 +62,7 @@ def renew_admin_certificate():
         return jsonify({"status": "success", "message": "Successfully renewed admin certificate. Please contact CA to retrieve the certificate."})
     
     except Exception as e:
-        traceback.print_exc()
+        app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400
 
 @app.route('/user_certificates/<string:uid>', methods=['GET'])
@@ -74,7 +73,7 @@ def user_certificates(uid):
         return jsonify({"status": "success", "certificates": certificates})
     
     except Exception as e:
-        traceback.print_exc()
+        app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400
 
 @app.route('/user_certificates/<string:uid>/<int:serial_id>', methods=['GET'])
@@ -85,7 +84,7 @@ def get_certificate_by_serial_id(uid, serial_id):
         return jsonify({"status": "success", "certificate": certificate})
     
     except Exception as e:
-        traceback.print_exc()
+        app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400
 
 @app.route('/crl', methods=['GET'])
@@ -97,7 +96,7 @@ def get_crl():
         return jsonify({"status": "success", "crl": crl_b64})
     
     except Exception as e:
-        traceback.print_exc()
+        app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400
 
 @app.route('/revoke_certificate', methods=['POST'])
@@ -113,7 +112,7 @@ def revoke_certificate():
         return jsonify({"status": "success"})
     
     except Exception as e:
-        traceback.print_exc()
+        app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400
 
 @app.route('/ca_status', methods=['GET'])
@@ -124,7 +123,7 @@ def get_ca_status():
         return jsonify({"status": "success", "n_issued": n_issued, "n_revoked": n_revoked, "next_serial_id": next_serial_id, "backup_status": backup_status})
     
     except Exception as e:
-        traceback.print_exc()
+        app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
