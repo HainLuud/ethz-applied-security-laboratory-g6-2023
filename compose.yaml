@@ -101,11 +101,49 @@ volumes:
   db-logs:
   log-data:
 secrets:
+  bak-cert:
+    file: bak/secrets/bak.imovies.ch.crt
+  bak-key:
+    file: bak/secrets/bak.imovies.ch.key
+  bak-htpasswd:
+    file: bak/secrets/.htpasswd
+  ca-cert:
+    file: ca/secrets/ca.imovies.ch.crt
+  ca-key:
+    file: ca/secrets/ca.imovies.ch.key
+  ca-root-cert:
+    file: ca/secrets/root.imovies.ch.crt
+  ca-root-key:
+    file: ca/secrets/root.imovies.ch.key
+  ca-bak-repository:
+    file: ca/secrets/bak_repository.txt
+  ca-bak-password:
+    file: ca/secrets/bak_password.txt
+  db-cert:
+    file: db/secrets/db.imovies.ch.crt
+  db-key:
+    file: db/secrets/db.imovies.ch.key
   db-root-password:
-    file: db/db_root_password.txt
+    file: db/secrets/db_root_password.txt
   db-password:
-    file: db/db_password.txt
+    file: db/secrets/db_password.txt
+  db-bak-repository:
+    file: db/secrets/bak_repository.txt
+  db-bak-password:
+    file: db/secrets/bak_password.txt
+  log-cert:
+    file: log/secrets/log.imovies.ch.crt
+  log-key:
+    file: log/secrets/log.imovies.ch.key
+  log-bak-repository:
+    file: log/secrets/bak_repository.txt
+  log-bak-password:
+    file: log/secrets/bak_password.txt
+  web-cert:
+    file: web/secrets/web.imovies.ch.crt
+  web-key:
+    file: web/secrets/web.imovies.ch.key
   web-secret-key:
-    file: web/web_secret_key.txt
+    file: web/secrets/web_secret_key.txt
   web-csrf-secret-key:
-    file: web/web_csrf_secret_key.txt
+    file: web/secrets/web_csrf_secret_key.txt

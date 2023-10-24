@@ -1,18 +1,27 @@
 services:
   server:
     build:
-      context: .
+      context: server
     restart: unless-stopped
     hostname: bak
+    secrets:
+      - bak-cert
+      - bak-key
+      - bak-htpasswd
     volumes:
-      - ./certs:/etc/ssl/certs:ro
       - bak-data:/app/data
-      - ./.htpasswd:/app/data/.htpasswd:ro
     environment:
       - TZ=Etc/UTC
-      - OPTIONS=--append-only --private-repos --tls --tls-cert /etc/ssl/certs/bak.imovies.ch.crt --tls-key /etc/ssl/certs/bak.imovies.ch.key
+      - OPTIONS=--append-only --htpasswd-file /run/secrets/bak-htpasswd --private-repos --tls --tls-cert /run/secrets/bak-cert --tls-key /run/secrets/bak-key
     ports:
       - "${BAK_PORT}:8000"
     user: 10001:10001
 volumes:
   bak-data:
+secrets:
+  bak-cert:
+    file: secrets/bak.imovies.ch.crt
+  bak-key:
+    file: secrets/bak.imovies.ch.key
+  bak-htpasswd:
+    file: secrets/.htpasswd

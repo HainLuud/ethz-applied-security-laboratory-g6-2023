@@ -1,12 +1,15 @@
 services:
   server:
     build:
-      context: .
+      context: server
     restart: unless-stopped
     hostname: log
+    secrets:
+      - ca-root-cert
+      - log-cert
+      - log-key
     volumes:
-      - ./rsyslog.conf:/etc/rsyslog.conf:ro
-      - ./certs:/etc/ssl/certs:ro
+      - ./server/rsyslog.conf:/etc/rsyslog.conf:ro
       - log-data:/logs
     environment:
       - TZ=Etc/UTC
@@ -18,11 +21,12 @@ services:
     image: creativeprojects/resticprofile:latest
     restart: unless-stopped
     hostname: log
+    secrets:
+      - ca-root-cert
+      - log-bak-repository
+      - log-bak-password
     volumes:
-      - ./profiles.yaml:/etc/resticprofile/profiles.yaml:ro
-      - ./bak_repository.txt:/etc/resticprofile/bak_repository.txt:ro
-      - ./bak_password.txt:/etc/resticprofile/bak_password.txt:ro
-      - ./certs:/etc/ssl/certs:ro
+      - ./scheduled-backup/profiles.yaml:/etc/resticprofile/profiles.yaml:ro
       - log-data:/resticprofile/log-data
     environment:
       - TZ=Etc/UTC
@@ -31,3 +35,14 @@ services:
     user: 0:0  # 'resticprofile schedule' requires root
 volumes:
   log-data:
+secrets:
+  ca-root-cert:
+    file: secrets/root.imovies.ch.crt
+  log-cert:
+    file: secrets/log.imovies.ch.crt
+  log-key:
+    file: secrets/log.imovies.ch.key
+  log-bak-repository:
+    file: secrets/bak_repository.txt
+  log-bak-password:
+    file: secrets/bak_password.txt

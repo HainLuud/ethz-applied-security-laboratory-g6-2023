@@ -43,7 +43,7 @@ db = SQLAlchemy(app, engine_options={
     'connect_args': {
         'auth_plugin': 'caching_sha2_password',
         'ssl_verify_identity': True,
-        'ssl_ca': '/etc/ssl/certs/root.imovies.ch.crt',
+        'ssl_ca': '/run/secrets/ca-root-cert',
     }
 })
 csrf = CSRFProtect(app)
@@ -149,7 +149,7 @@ def index():
 @login_required
 def get_crl():
     try:
-        response = requests.get(f'https://{CA_HOST}/crl', verify='/etc/ssl/certs/root.imovies.ch.crt')
+        response = requests.get(f'https://{CA_HOST}/crl', verify='/run/secrets/ca-root-cert')
         data = response.json()
         if data['status'] != 'success':
             raise RuntimeError(data['message'])
@@ -218,7 +218,7 @@ def post_login_cert():
     serial_id = cert.serial_number
 
     try:
-        response = requests.get(f'https://{CA_HOST}/user_certificates/{uid}/{serial_id}', verify='/etc/ssl/certs/root.imovies.ch.crt')
+        response = requests.get(f'https://{CA_HOST}/user_certificates/{uid}/{serial_id}', verify='/run/secrets/ca-root-cert')
         data = response.json()
 
         if data['status'] != 'success':
@@ -262,7 +262,7 @@ def get_profile(uid):
         abort(404)
 
     try:
-        response = requests.get(f'https://{CA_HOST}/user_certificates/{user.uid}', verify='/etc/ssl/certs/root.imovies.ch.crt')
+        response = requests.get(f'https://{CA_HOST}/user_certificates/{user.uid}', verify='/run/secrets/ca-root-cert')
         data = response.json()
         if data['status'] != 'success':
             raise RuntimeError(data['message'])
@@ -340,7 +340,7 @@ def post_issue(uid):
             'passphrase': passphrase,
             'revoke': revoke,
         }
-        response = requests.post(f'https://{CA_HOST}/issue_certificate', json=json, verify='/etc/ssl/certs/root.imovies.ch.crt')
+        response = requests.post(f'https://{CA_HOST}/issue_certificate', json=json, verify='/run/secrets/ca-root-cert')
         data = response.json()
         if data['status'] != 'success':
             raise RuntimeError(data['message'])
@@ -375,7 +375,7 @@ def post_revoke(uid):
             'uid': user.uid,
             'serial_id_list': serial_id_list,
         }
-        response = requests.post(f'https://{CA_HOST}/revoke_certificate', json=json, verify='/etc/ssl/certs/root.imovies.ch.crt')
+        response = requests.post(f'https://{CA_HOST}/revoke_certificate', json=json, verify='/run/secrets/ca-root-cert')
         data = response.json()
         if data['status'] != 'success':
             raise RuntimeError(data['message'])
@@ -404,7 +404,7 @@ def post_renew(uid):
             'cert_data': session.get('cert_data'),
             'passphrase': passphrase,
         }
-        response = requests.post(f'https://{CA_HOST}/renew_admin_certificate', json=json, verify='/etc/ssl/certs/root.imovies.ch.crt')
+        response = requests.post(f'https://{CA_HOST}/renew_admin_certificate', json=json, verify='/run/secrets/ca-root-cert')
         data = response.json()
         if data['status'] != 'success':
             raise RuntimeError(data['message'])
@@ -419,7 +419,7 @@ def post_renew(uid):
 @admin_required
 def get_admin():
     try:
-        response = requests.get(f'https://{CA_HOST}/ca_status', verify='/etc/ssl/certs/root.imovies.ch.crt')
+        response = requests.get(f'https://{CA_HOST}/ca_status', verify='/run/secrets/ca-root-cert')
         data = response.json()
         if data['status'] != 'success':
             raise RuntimeError(data['message'])

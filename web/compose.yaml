@@ -5,11 +5,10 @@ services:
     restart: unless-stopped
     hostname: web
     secrets:
+      - ca-root-cert
       - db-password
       - web-secret-key
       - web-csrf-secret-key
-    volumes:
-      - ./certs:/etc/ssl/certs:ro
     environment:
       - TZ=Etc/UTC
       - DATABASE_DB=imovies
@@ -25,19 +24,29 @@ services:
     image: nginxinc/nginx-unprivileged:latest
     restart: unless-stopped
     hostname: web
+    secrets:
+      - ca-root-cert
+      - web-cert
+      - web-key
     volumes:
       - ./proxy/default.conf.template:/etc/nginx/templates/default.conf.template:ro
-      - ./certs:/etc/ssl/certs:ro
     environment:
       - TZ=Etc/UTC
+      - WEB_SERVER_NAME=imovies.ch
       - WEB_SERVER_HOST=server:8000
     ports:
       - "${WEB_PORT}:8000"
     user: 101:101
 secrets:
+  ca-root-cert:
+    file: secrets/root.imovies.ch.crt
   db-password:
-    file: db_password.txt
+    file: secrets/db_password.txt
   web-secret-key:
-    file: web_secret_key.txt
+    file: secrets/web_secret_key.txt
   web-csrf-secret-key:
-    file: web_csrf_secret_key.txt
+    file: secrets/web_csrf_secret_key.txt
+  web-cert:
+    file: secrets/web.imovies.ch.crt
+  web-key:
+    file: secrets/web.imovies.ch.key

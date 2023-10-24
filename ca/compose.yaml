@@ -4,10 +4,14 @@ services:
       context: server
     restart: unless-stopped
     hostname: ca
+    secrets:
+      - ca-root-cert
+      - ca-root-key
+      - ca-cert
+      - ca-key
     volumes:
-      - ./certs:/etc/ssl/certs:ro
       - ca-data:/app/data
-      - ./certs/admin.imovies.ch.crt:/app/data/clients/admin/310629842216214876788742898011996388621811897248_cert.crt:ro
+      - ./secrets/admin.imovies.ch.crt:/app/data/clients/admin/310629842216214876788742898011996388621811897248_cert.crt:ro
     environment:
       - TZ=Etc/UTC
       - BAK_HOST=bak.imovies.ch:443
@@ -19,11 +23,12 @@ services:
     image: creativeprojects/resticprofile:latest
     restart: unless-stopped
     hostname: ca
+    secrets:
+      - ca-root-cert
+      - ca-bak-repository
+      - ca-bak-password
     volumes:
-      - ./profiles.yaml:/etc/resticprofile/profiles.yaml:ro
-      - ./bak_repository.txt:/etc/resticprofile/bak_repository.txt:ro
-      - ./bak_password.txt:/etc/resticprofile/bak_password.txt:ro
-      - ./certs:/etc/ssl/certs:ro
+      - ./scheduled-backup/profiles.yaml:/etc/resticprofile/profiles.yaml:ro
       - ca-data:/resticprofile/ca-data
     environment:
       - TZ=Etc/UTC
@@ -32,3 +37,16 @@ services:
     user: 0:0  # 'resticprofile schedule' requires root
 volumes:
   ca-data:
+secrets:
+  ca-root-cert:
+    file: secrets/root.imovies.ch.crt
+  ca-root-key:
+    file: secrets/root.imovies.ch.key
+  ca-cert:
+    file: secrets/ca.imovies.ch.crt
+  ca-key:
+    file: secrets/ca.imovies.ch.key
+  ca-bak-repository:
+    file: secrets/bak_repository.txt
+  ca-bak-password:
+    file: secrets/bak_password.txt

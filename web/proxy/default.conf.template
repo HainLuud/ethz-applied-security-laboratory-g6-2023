@@ -1,12 +1,12 @@
 server {
     listen 8000 ssl default_server;
-    server_name imovies.ch; 
+    server_name ${WEB_SERVER_NAME};
 
-    ssl_certificate /etc/ssl/certs/web.imovies.ch.crt;
-    ssl_certificate_key /etc/ssl/certs/web.imovies.ch.key;
+    ssl_certificate /run/secrets/web-cert;
+    ssl_certificate_key /run/secrets/web-key;
 
     ssl_verify_client optional;
-    ssl_client_certificate /etc/ssl/certs/root.imovies.ch.crt;
+    ssl_client_certificate /run/secrets/ca-root-cert;
 
     location / {
         proxy_set_header X-Forwarded-Host $host;

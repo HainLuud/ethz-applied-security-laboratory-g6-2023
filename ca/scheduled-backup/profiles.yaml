@@ -6,9 +6,9 @@ global:
   scheduler: crond
 
 default:
-  repository-file: bak_repository.txt
-  password-file: bak_password.txt
-  cacert: /etc/ssl/certs/root.imovies.ch.crt
+  repository-file: /run/secrets/ca-bak-repository
+  password-file: /run/secrets/ca-bak-password
+  cacert: /run/secrets/ca-root-cert
   initialize: true
 
   backup:
