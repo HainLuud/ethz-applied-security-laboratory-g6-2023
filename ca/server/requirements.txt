@@ -1,5 +1,6 @@
-Flask==3.0.0
 cryptography==41.0.4
+Flask==3.0.0
+flask-talisman==1.1.0
 gunicorn==21.2.0
 pydash==5.1.2
 pyOpenSSL==23.2.0

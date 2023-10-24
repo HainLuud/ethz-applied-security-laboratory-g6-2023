@@ -17,6 +17,7 @@ from flask import (Flask, abort, flash, g, redirect, render_template,
                    render_template_string, request, send_file, session,
                    url_for)
 from flask_sqlalchemy import SQLAlchemy
+from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect
 
 DATABASE_DB = os.getenv('DATABASE_DB')
@@ -34,6 +35,7 @@ with open(WEB_CSRF_SECRET_KEY_FILE, 'r') as f:
 CA_HOST = os.getenv('CA_HOST')
 
 app = Flask(__name__)
+Talisman(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+mysqlconnector://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_DB}'
 app.config['SECRET_KEY'] = WEB_SECRET_KEY
 app.config['WTF_CSRF_SECRET_KEY'] = WEB_CSRF_SECRET_KEY

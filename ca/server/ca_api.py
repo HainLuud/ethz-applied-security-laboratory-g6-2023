@@ -10,10 +10,12 @@ Authors:
 '''
 import traceback
 from flask import Flask, jsonify, request
+from flask_talisman import Talisman
 import base64
 from ca import CA, User
 
 app = Flask(__name__)
+Talisman(app)
 
 ca = CA()
 
