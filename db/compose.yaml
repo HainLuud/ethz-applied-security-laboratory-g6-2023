@@ -80,7 +80,7 @@ secrets:
     file: secrets/db_password.txt
   db-bak-repository:
     file: secrets/bak_repository.txt
-  cb-bak-password:
+  db-bak-password:
     file: secrets/bak_password.txt
 volumes:
   db-data:

@@ -1,0 +1,52 @@
+---
+- hosts: web
+  tasks:
+    - name: Add other machines to /etc/hosts
+      become: yes
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ item }}"
+      loop:
+        - "192.168.56.10 vpn.imovies.ch"
+        - "192.168.56.12 db.imovies.ch"
+        - "192.168.56.13 ca.imovies.ch"
+        - "192.168.56.14 bak.imovies.ch"
+        - "192.168.56.15 log.imovies.ch"
+
+    - name: Install Docker
+      shell: "curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh"
+    
+    - name: Make directory destination
+      shell: "mkdir /home/vagrant/web"
+
+    - name: Copy the web directory to the remote host
+      copy:
+        src: ../web
+        dest: /home/vagrant/
+        owner: vagrant
+        group: vagrant
+        mode: 0644
+    
+    - name: Start the container using Docker Compose
+      become: yes
+      shell: "docker compose up -d"
+      args:
+        chdir: /home/vagrant/web
+
+    - name: Install SSH
+      become: yes
+      apt:
+        name: openssh-server
+        state: present
+
+    - name: Restart SSH service
+      become: yes
+      service:
+        name: sshd
+        state: restarted
+    
+    - name: Install Ansible
+      become: yes
+      apt:
+        name: ansible
+        state: present
