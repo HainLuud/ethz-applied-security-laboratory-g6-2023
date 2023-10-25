@@ -1,0 +1,45 @@
+---
+  - name: "Configure web server locally (firewall rules)"
+    hosts: localhost
+    connection: local 
+    become: yes
+    tasks:
+
+    - name: Truncate authorized_keys
+      command: truncate -s 0 /home/vagrant/.ssh/authorized_keys
+
+    - name: Add public key to authorized_keys
+      lineinfile:
+        path: /home/vagrant/.ssh/authorized_keys
+        line: "{{ lookup('file', '/home/vagrant/admin_ssh.pub') }}"
+        create: yes
+    
+    - name: Delete admin_ssh.pub
+      file:
+        path: /home/vagrant/admin_ssh.pub
+        state: absent
+
+    - name: Enable UFW (Uncomplicated Firewall)
+      ufw:
+        state: enabled
+
+    - name: Configure firewall
+      ufw:
+        logging: on
+
+    - name: Allow incoming traffic betwen logging port 443 and hosts web
+      ufw:
+        rule: allow
+        proto: tcp
+        port: "443"
+
+    - name: Allow incoming traffic to port 22 from web
+      ufw:
+        rule: limit
+        proto: tcp
+        port: ssh
+
+    - name: Restart SSH service
+      service:
+        name: ssh
+        state: restarted

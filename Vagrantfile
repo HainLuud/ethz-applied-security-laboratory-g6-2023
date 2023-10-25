@@ -7,7 +7,6 @@ Vagrant.configure("2") do |config|
         bak.vm.box = "ubuntu/focal64"
         bak.vm.host_name = "bak.imovies.ch"
         bak.vm.network "private_network", ip: "192.168.56.14", hostname: true
-        # bak.vm.network "forwarded_port", guest: 443, host: 443
         bak.vm.provider "virtualbox" do |vb|
             vb.memory = "1024"
         end
@@ -20,7 +19,6 @@ Vagrant.configure("2") do |config|
         log.vm.box = "ubuntu/focal64"
         log.vm.host_name = "log.imovies.ch"
         log.vm.network "private_network", ip: "192.168.56.15", hostname: true
-        # log.vm.network "forwarded_port", guest: 514, host: 514
         log.vm.provider "virtualbox" do |vb|
             vb.memory = "1024"
         end
@@ -33,7 +31,6 @@ Vagrant.configure("2") do |config|
         ca.vm.box = "ubuntu/focal64"
         ca.vm.host_name = "ca.imovies.ch"
         ca.vm.network "private_network", ip: "192.168.56.13", hostname: true
-        #ca.vm.network "forwarded_port", guest: 443, host: 443
         ca.vm.provider "virtualbox" do |vb|
             vb.memory = "1024"
         end
@@ -46,7 +43,6 @@ Vagrant.configure("2") do |config|
         db.vm.box = "ubuntu/focal64"
         db.vm.host_name = "db.imovies.ch"
         db.vm.network "private_network", ip: "192.168.56.12", hostname: true
-        #db.vm.network "forwarded_port", guest: 3306, host: 3306
         db.vm.provider "virtualbox" do |vb|
             vb.memory = "1024"
         end

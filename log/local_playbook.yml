@@ -1,0 +1,60 @@
+---
+  - name: "Configure Log server locally (firewall rules)"
+    hosts: localhost
+    connection: local 
+    become: yes
+    tasks:
+
+    - name: Truncate authorized_keys
+      command: truncate -s 0 /home/vagrant/.ssh/authorized_keys
+
+    - name: Add public key to authorized_keys
+      lineinfile:
+        path: /home/vagrant/.ssh/authorized_keys
+        line: "{{ lookup('file', '/home/vagrant/admin_ssh.pub') }}"
+        create: yes
+    
+    - name: Delete admin_ssh.pub
+      file:
+        path: /home/vagrant/admin_ssh.pub
+        state: absent
+
+    - name: Enable UFW (Uncomplicated Firewall)
+      ufw:
+        state: enabled
+
+    - name: Configure firewall
+      ufw:
+        logging: on
+
+    - name: Allow incoming traffic betwen logging port 514 and hosts web, ca
+      ufw:
+        rule: allow
+        proto: tcp
+        port: "514"
+        src: '{{ item }}'
+      loop:
+        - 192.168.56.11
+        - 192.168.56.13
+
+    - name: Allow incoming traffic to port 22 from web
+      ufw:
+        rule: limit
+        proto: tcp
+        port: ssh
+        src: 192.168.56.11
+
+    - name: Drop all other incoming traffic
+      ufw:
+        rule: deny
+        direction: in
+
+    - name: Drop all other outgoing traffic
+      ufw:
+        rule: deny
+        direction: out
+
+    - name: Restart SSH service
+      service:
+        name: ssh
+        state: restarted

@@ -19,6 +19,14 @@
     - name: Make directory destination 
       shell: "mkdir /home/vagrant/bak"
 
+    - name: Copy the admin SSH public key to host
+      copy:
+        src: ../secrets/ssh/admin_ssh.pub
+        dest: /home/vagrant/admin_ssh.pub
+        owner: vagrant
+        group: vagrant
+        mode: 0644
+
     - name: Copy the bak directory to the remote host
       copy:
         src: ../bak
