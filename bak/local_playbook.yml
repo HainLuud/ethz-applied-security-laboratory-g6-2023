@@ -1,6 +1,5 @@
 ---
-  - name: "Configure Backup server locally (firewall rules)"
-    hosts: localhost
+  - hosts: bak
     connection: local 
     become: yes
     tasks:

@@ -1,6 +1,5 @@
 ---
-  - name: "Configure web server locally (firewall rules)"
-    hosts: localhost
+  - hosts: web
     connection: local 
     become: yes
     tasks:

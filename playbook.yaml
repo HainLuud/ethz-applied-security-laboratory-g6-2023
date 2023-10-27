@@ -1,0 +1,69 @@
+---
+- hosts: all
+  tasks:
+    - name: Add other machines to /etc/hosts
+      become: yes
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ item }}"
+      loop:
+        - "192.168.56.10 vpn.imovies.ch"
+        - "192.168.56.11 imovies.ch"
+        - "192.168.56.12 db.imovies.ch"
+        - "192.168.56.13 ca.imovies.ch"
+        - "192.168.56.14 log.imovies.ch"
+        - "192.168.56.15 bak.imovies.ch"
+
+    - name: Install Docker
+      shell: "curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh"
+
+    - name: Copy the admin SSH public key to host
+      copy:
+        src: secrets/ssh/admin_ssh.pub
+        dest: /home/vagrant/admin_ssh.pub
+        owner: vagrant
+        group: vagrant
+        mode: 0644
+
+    - name: Start the container using Docker Compose
+      shell: "docker compose up -d"
+      become: yes
+      args:
+        chdir: "/home/vagrant/{{ inventory_hostname }}"
+
+- hosts: wireguard
+  become: yes
+  tasks:
+    - name: Update apt repositories
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Install Docker Compose
+      apt:
+        name: docker-compose
+        state: present
+
+    - name: Copy the docker-compose.yml file to the remote host
+      copy:
+        src: /home/rembrandt/Documents/Projektid/GitProjects/ethz-applied-security-laboratory-2023/vagrant/docker-compose.yml
+        dest: /home/vagrant/docker-compose.yml
+        owner: vagrant
+        group: docker
+        mode: "0644"
+
+    - name: Start the container using Docker Compose
+      command: "docker-compose up -d"
+
+    - name: Copy peer configuration files from WireGuard VM
+      fetch:
+        src: "/home/vagrant/config/{{ item }}/peer{{ item }}.conf"
+        dest: ./
+        flat: true
+      loop:
+        - 1
+        - 2

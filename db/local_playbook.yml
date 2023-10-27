@@ -1,6 +1,5 @@
 ---
-  - name: "Configure Database server locally (firewall rules)"
-    hosts: localhost
+  - hosts: db
     connection: local 
     become: yes
     tasks:

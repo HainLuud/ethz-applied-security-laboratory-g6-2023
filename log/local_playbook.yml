@@ -1,6 +1,5 @@
 ---
-  - name: "Configure Log server locally (firewall rules)"
-    hosts: localhost
+  - hosts: log
     connection: local 
     become: yes
     tasks:

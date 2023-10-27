@@ -1,6 +1,5 @@
 ---
-  - name: "Configure CA server locally (firewall rules)"
-    hosts: localhost
+  - hosts: ca
     connection: local 
     become: yes
     tasks:

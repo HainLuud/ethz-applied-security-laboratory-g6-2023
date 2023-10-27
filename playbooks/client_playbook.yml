@@ -1,0 +1,26 @@
+---
+- hosts: client
+  tasks:
+    - name: Add other machines to /etc/hosts
+      become: yes
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ item }}"
+      loop:
+        - "192.168.57.1 imovies.ch"
+
+    - name: Copy the admin SSH public key to host
+      copy:
+        src: ../secrets/ssh/admin_ssh.pub
+        dest: /home/vagrant/.ssh/admin_ssh.pub
+        owner: vagrant
+        group: vagrant
+        mode: 0644
+
+    - name: Copy the admin SSH private key to host
+      copy:
+        src: ../secrets/ssh/admin_ssh
+        dest: /home/vagrant/.ssh/admin_ssh
+        owner: vagrant
+        group: vagrant
+        mode: 0644

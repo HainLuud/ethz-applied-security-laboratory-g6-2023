@@ -40,21 +40,3 @@
       become: yes
       args:
         chdir: /home/vagrant/db
-
-    - name: Install SSH
-      become: yes
-      apt:
-        name: openssh-server
-        state: present
-
-    - name: Restart SSH service
-      become: yes
-      service:
-        name: sshd
-        state: restarted
-    
-    - name: Install Ansible
-      become: yes
-      apt:
-        name: ansible
-        state: present
