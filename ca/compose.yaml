@@ -11,7 +11,7 @@ services:
       - ca-key
     volumes:
       - ca-data:/app/data
-      - ./secrets/admin.imovies.ch.crt:/app/data/clients/admin/310629842216214876788742898011996388621811897248_cert.crt:ro
+      - ./secrets/admin.imovies.ch.crt:/app/data/clients/admin/15654392993111371456575333615027215480854870364_cert.crt:ro
     environment:
       - TZ=Etc/UTC
       - BAK_HOST=bak.imovies.ch:443
