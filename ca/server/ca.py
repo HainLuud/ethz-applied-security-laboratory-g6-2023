@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import logging
 import os
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, PublicFormat, NoEncryption, BestAvailableEncryption, load_pem_private_key
+from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, PublicFormat, BestAvailableEncryption, load_pem_private_key
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
@@ -208,7 +208,7 @@ class CA:
         client_private_key = rsa.generate_private_key(public_exponent=self.EXPONENT, key_size=self.BITS, )
 
         pem_client_private_key = client_private_key.private_bytes(encoding=PEM, format=TraditionalOpenSSL,
-                                                                  encryption_algorithm=NoEncryption()) # PKCS12 already uses passphrase
+                                                                  encryption_algorithm=BestAvailableEncryption(passphrase)) # PKCS12 already uses passphrase
         self.logger.info("Generated new client key pair!")
         self.logger.debug("Generating new client certificate ...")
         
@@ -260,16 +260,20 @@ class CA:
         
         self.store(f'{client_directory}/{self.serial_id}_cert.crt', "wb+", cert.public_bytes(encoding=PEM))
         self.store(f'{client_directory}/{self.serial_id}_key.key', "wb+", pem_client_private_key)
-        self.update_serial_id()
         
         pkcs12 = PKCS12()
         pkcs12.set_certificate(load_certificate(type=FILETYPE_PEM, buffer=cert_pem))
-        pkcs12.set_privatekey(load_privatekey(type=FILETYPE_PEM, buffer=pem_client_private_key))
+        pkcs12.set_privatekey(load_privatekey(type=FILETYPE_PEM, buffer=pem_client_private_key, passphrase=passphrase))
         pkcs12.set_ca_certificates([load_certificate(type=FILETYPE_PEM, buffer=self.root_cert_pem)])
         client_cert = pkcs12.export(passphrase=passphrase)
-
+        
+        if user.uid == 'admin':
+            self.store(f'{client_directory}/{self.serial_id}_cert.p12', "wb+", client_cert)
+        
+        self.update_serial_id()
+        
         self.logger.info("Generated new client certificate ...")
-      
+        
         return client_cert
     
     '''
@@ -290,7 +294,7 @@ class CA:
             files = listdir(client_directory)
             certs = []
             for file in files:
-                if '.key' in file:
+                if '_cert.crt' not in file:
                     continue
                 cert_pem = self.load(f'{client_directory}/{file}', 'rb')
                 cert = x509.load_pem_x509_certificate(cert_pem, default_backend())

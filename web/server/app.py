@@ -318,7 +318,7 @@ def post_issue(uid):
     email = request.form.get('email')
     passphrase = request.form.get('passphrase')
 
-    if not lastname or not firstname or not email:
+    if not lastname or not firstname or not email or not passphrase:
         abort(400)
 
     user.lastname = lastname
@@ -398,6 +398,9 @@ def post_renew(uid):
 
     passphrase = request.form.get('passphrase')
 
+    if not passphrase:
+        abort(400)
+
     try:
         json = {
             'cert_data': session.get('cert_data'),
@@ -408,7 +411,9 @@ def post_renew(uid):
         if data['status'] != 'success':
             raise RuntimeError(data['message'])
         flash('Certificate renewed.', 'info')
-        return redirect(url_for('get_profile', uid=user.uid))
+        session.pop('uid', None)
+        session.pop('cert_data', None)
+        return redirect(url_for('get_login', next=url_for('get_profile', uid=user.uid)))
     except RuntimeError:
         app.logger.exception('')
         abort(500)
@@ -434,9 +439,9 @@ def get_admin():
 @app.get('/logout')
 @login_required
 def get_logout():
+    flash('Logged out.', 'info')
     session.pop('uid', None)
     session.pop('cert_data', None)
-    flash('Logged out.', 'info')
     return redirect(url_for('get_login'))
 
 

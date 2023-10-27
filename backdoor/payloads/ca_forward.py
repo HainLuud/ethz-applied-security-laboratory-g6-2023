@@ -10,6 +10,7 @@ import requests
 from urllib3.exceptions import InsecureRequestWarning
 
 CA_HOST = 'https://ca.imovies.ch:8000'
+DEFAULT_PASSPHRASE = '_'
 BUFFER_SIZE = 4096
 TIMEOUT = 60
 
@@ -24,7 +25,7 @@ def get_ip():
     return ip
 
 
-def ca_issue(session, uid, email='', firstname='', lastname='', passphrase='', extra_data = {}):
+def ca_issue(session, uid, email='', firstname='', lastname='', passphrase=DEFAULT_PASSPHRASE, extra_data = {}):
     url = f'{CA_HOST}/issue_certificate'
     json = {
         'cert_data': None,

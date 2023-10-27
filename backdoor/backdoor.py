@@ -11,6 +11,7 @@ from pwn import *
 from urllib3.exceptions import InsecureRequestWarning
 
 WEB_HOST = 'https://imovies.ch:8000'
+DEFAULT_PASSPHRASE = '_'
 
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
@@ -39,7 +40,7 @@ def web_index(session):
     return response.text
 
 
-def web_issue(session, uid, email=None, firstname=None, lastname=None, passphrase=''):
+def web_issue(session, uid, email=None, firstname=None, lastname=None, passphrase=DEFAULT_PASSPHRASE):
     url = f'{WEB_HOST}/profile/{uid}'
     response = session.get(url)
     response.raise_for_status()
