@@ -59,20 +59,18 @@ class User(db.Model):
     pwd = db.Column(db.String(64), nullable=False)
 
     @property
-    def is_admin(self) -> str:
+    def is_admin(self) -> bool:
         return self.uid == 'admin'
 
     @property
     def name(self) -> str:
         if self.firstname and self.lastname:
-            name = f'{self.firstname} {self.lastname}'
-        elif self.firstname:
-            name = self.firstname
-        elif self.lastname:
-            name = self.lastname
-        else:
-            name = self.uid
-        return render_template_string(name)
+            return f'{self.firstname} {self.lastname}'
+        if self.firstname:
+            return self.firstname
+        if self.lastname:
+            return self.lastname
+        return self.uid
 
     def update_pwd(self, pwd: str) -> str:
         return bcrypt.hashpw(pwd.encode(), bcrypt.gensalt())
@@ -141,7 +139,7 @@ def not_found(e):
 @app.get('/')
 @login_required
 def index():
-    return render_template('index.html')
+    return render_template('index.html', render_template_string=render_template_string)
 
 
 @app.get('/crl')
@@ -202,7 +200,7 @@ def post_login_cert():
 
     if not cert_data:
         abort(400)
-    
+
     cert = x509.load_pem_x509_certificate(cert_data.encode())
     try:
         commonname = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value

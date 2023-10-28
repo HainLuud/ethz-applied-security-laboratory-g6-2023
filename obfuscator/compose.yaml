@@ -1,0 +1,9 @@
+services:
+  cythonize:
+    build:
+      context: cythonize
+    user: 10001:10001
+  pyarmor:
+    build:
+      context: pyarmor
+    user: 10001:10001
