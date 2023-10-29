@@ -1,0 +1,8 @@
+.DS_Store
+.pyarmor/
+.vagrant/
+.venv/
+fact_cache/
+node_modules/
+obfuscate/
+roles/
