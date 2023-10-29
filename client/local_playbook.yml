@@ -1,6 +1,0 @@
----
-  - hosts: client
-    connection: local 
-    become: yes
-    tasks:
-

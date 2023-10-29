@@ -1,46 +1,58 @@
-Vagrant.configure("2") do |config|
-    config.vm.provider "virtualbox" do |vb|
-        vb.memory = "1024"
-    end
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
 
-    # machine_names = ["bak", "log", "ca", "db", "web", "vpn", "client"]
+Vagrant.configure("2") do |config|
+    config.vm.synced_folder ".", "/vagrant", disabled: true
+
     machine_names = ["bak", "log", "ca", "db", "web", "client"]
+    servers = ["bak", "log", "ca", "db", "web"]
+    clients = ["client"]
+
+    ENABLE_GUI = ENV['ENABLE_GUI'] == 'true'
 
     machine_names.each do |machine_name|
         config.vm.define machine_name do |machine|
             machine.vm.box = "ubuntu/focal64"
             machine.vm.hostname = machine_name
 
-            case machine_name
-            when "bak"
-                machine.vm.network "private_network", ip: "192.168.56.5", hostname: true
-            when "log"
-                machine.vm.network "private_network", ip: "192.168.56.4", hostname: true
-            when "ca"
-                machine.vm.network "private_network", ip: "192.168.56.3", hostname: true
-            when "db"
-                machine.vm.network "private_network", ip: "192.168.56.2", hostname: true
-            when "web"
-                machine.vm.network "private_network", ip: "192.168.56.1", hostname: true
-                machine.vm.network "private_network", ip: "192.168.57.1"
-            # when "vpn"
-            #     machine.vm.network "private_network", ip: "192.168.56.10", hostname: true
-            #     machine.vm.network "forwarded_port", guest: 51820, host: 51820, protocol: "udp"
-            when "client"
-                machine.vm.network "private_network", ip: "192.168.57.2"
-                machine.vm.provider "virtualbox" do |vb|
-                    vb.gui = true
+            machine.vm.provider "virtualbox" do |vb|
+                vb.name = machine_name
+
+                if servers.include?(machine_name)
+                    vb.memory = "1024"
+                    vb.cpus = 2
+                end
+
+                if clients.include?(machine_name)
+                    vb.memory = "4096"
+                    vb.cpus = 2
+                    vb.gui = ENABLE_GUI
+                    vb.customize ["modifyvm", :id, "--vram", "128"]
+                    vb.customize ["modifyvm", :id, "--accelerate3d", "on"]
                 end
             end
 
-            machine.vm.provision "ansible_local" do |ansible|
-                ansible.playbook = "#{machine_name}/local_playbook.yml"
+            if servers.include?(machine_name)
+                main_ip = "192.168.56.#{servers.length() - servers.index(machine_name)}"
+                machine.vm.network "private_network", ip: main_ip, hostname: true
+            end
+
+            case machine_name
+            when "web" then machine.vm.network "private_network", ip: "192.168.57.2"
+            when "client" then machine.vm.network "private_network", ip: "192.168.57.3"
             end
 
             if machine_name == machine_names.last
                 machine.vm.provision "ansible" do |ansible|
+                    ansible.galaxy_role_file = "requirements.yaml"
+                    ansible.playbook = "playbook.yaml"
+                    ansible.compatibility_mode = "2.0"
+                    ansible.version = "latest"
                     ansible.limit = "all"
-                    ansible.playbook = "playbook.yml"
+                    ansible.groups = {
+                        "servers" => servers,
+                        "clients" => clients
+                    }
                 end
             end
         end

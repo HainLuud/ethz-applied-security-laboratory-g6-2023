@@ -1,69 +1,135 @@
 ---
-- hosts: all
-  tasks:
-    - name: Add other machines to /etc/hosts
-      become: yes
-      lineinfile:
-        path: /etc/hosts
-        line: "{{ item }}"
-      loop:
-        - "192.168.56.10 vpn.imovies.ch"
-        - "192.168.56.11 imovies.ch"
-        - "192.168.56.12 db.imovies.ch"
-        - "192.168.56.13 ca.imovies.ch"
-        - "192.168.56.14 log.imovies.ch"
-        - "192.168.56.15 bak.imovies.ch"
-
-    - name: Install Docker
-      shell: "curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh"
-
-    - name: Copy the admin SSH public key to host
-      copy:
-        src: secrets/ssh/admin_ssh.pub
-        dest: /home/vagrant/admin_ssh.pub
-        owner: vagrant
-        group: vagrant
-        mode: 0644
-
-    - name: Start the container using Docker Compose
-      shell: "docker compose up -d"
-      become: yes
-      args:
-        chdir: "/home/vagrant/{{ inventory_hostname }}"
-
-- hosts: wireguard
-  become: yes
-  tasks:
-    - name: Update apt repositories
-      apt:
+- name: Configure Servers
+  hosts: servers
+  roles:
+    - role: geerlingguy.pip
+      become: true
+    - role: geerlingguy.docker
+      become: true
+  pre_tasks:
+    - name: Update repositories cache
+      become: true
+      ansible.builtin.apt:
         update_cache: yes
+  tasks:
+    - name: Add admin SSH private key (web)
+      ansible.builtin.copy:
+        src: secrets/ssh/admin_ssh
+        dest: "{{ ansible_env['HOME'] }}/.ssh/id_rsa"
+        owner: "{{ ansible_env['USER'] }}"
+        group: "{{ ansible_env['USER'] }}"
+        mode: "0600"
+      when: inventory_hostname == 'web'
 
-    - name: Install Docker
-      apt:
-        name: docker.io
+    - name: Add admin SSH public key (web)
+      ansible.builtin.copy:
+        src: secrets/ssh/admin_ssh.pub
+        dest: "{{ ansible_env['HOME'] }}/.ssh/id_rsa.pub"
+        owner: "{{ ansible_env['USER'] }}"
+        group: "{{ ansible_env['USER'] }}"
+        mode: "0600"
+      when: inventory_hostname == 'web'
+
+    - name: Authorize admin SSH public key
+      ansible.posix.authorized_key:
+        user: "{{ ansible_env['USER'] }}"
         state: present
+        key: "{{ lookup('file', 'secrets/ssh/admin_ssh.pub') }}"
 
-    - name: Install Docker Compose
-      apt:
-        name: docker-compose
-        state: present
+    - name: Copy machine directory
+      ansible.builtin.copy:
+        src: "{{ inventory_hostname }}/"
+        dest: "{{ ansible_env['HOME'] }}"
+        owner: "{{ ansible_env['USER'] }}"
+        group: "{{ ansible_env['USER'] }}"
+        mode: "0755"
 
-    - name: Copy the docker-compose.yml file to the remote host
-      copy:
-        src: /home/rembrandt/Documents/Projektid/GitProjects/ethz-applied-security-laboratory-2023/vagrant/docker-compose.yml
-        dest: /home/vagrant/docker-compose.yml
-        owner: vagrant
-        group: docker
-        mode: "0644"
-
-    - name: Start the container using Docker Compose
-      command: "docker-compose up -d"
-
-    - name: Copy peer configuration files from WireGuard VM
-      fetch:
-        src: "/home/vagrant/config/{{ item }}/peer{{ item }}.conf"
-        dest: ./
-        flat: true
+    - name: Install Python packages
+      become: true
+      ansible.builtin.pip:
+        name: "{{ item.name }}"
+        state: "{{ item.state | default(omit) }}"
       loop:
-        - 1
-        - 2
+        - { name: pyOpenSSL, state: latest }  # See: https://github.com/geerlingguy/ansible-role-pip/issues/56
+        - { name: docker }
+        - { name: docker-compose }
+
+    - name: Add machines to /etc/hosts
+      become: true
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ item.ip }} {{ item.alias }}"
+      loop:
+        - { ip: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}", alias: imovies.ch }
+        - { ip: "{{ hostvars['db']['ansible_enp0s8']['ipv4']['address'] }}", alias: db.imovies.ch }
+        - { ip: "{{ hostvars['ca']['ansible_enp0s8']['ipv4']['address'] }}", alias: ca.imovies.ch }
+        - { ip: "{{ hostvars['log']['ansible_enp0s8']['ipv4']['address'] }}", alias: log.imovies.ch }
+        - { ip: "{{ hostvars['bak']['ansible_enp0s8']['ipv4']['address'] }}", alias: bak.imovies.ch }
+    
+    - name: Enable firewall and set default deny policy
+      become: true
+      community.general.ufw:
+        state: enabled
+        default: deny
+        logging: true
+
+    - name: Set firewall allow rules
+      become: true
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.port | default(omit) }}"
+        proto: "{{ item.proto | default(omit) }}"
+        src: "{{ item.src | default(omit) }}"
+      when: item.hostname is not defined or inventory_hostname == item.hostname
+      loop:
+        - { port: "22", proto: tcp, src: "{{ ansible_env['SSH_CLIENT'].split() | first }}" }
+        - { port: "22", proto: tcp, src: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: bak, port: "443", proto: tcp, src: "{{ hostvars['db']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: bak, port: "443", proto: tcp, src: "{{ hostvars['ca']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: bak, port: "443", proto: tcp, src: "{{ hostvars['log']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: log, port: "514", proto: tcp, src: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: log, port: "514", proto: tcp, src: "{{ hostvars['ca']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: ca, port: "443", proto: tcp, src: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: db, port: "3306", proto: tcp, src: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: db, port: "3306", proto: tcp, src: "{{ hostvars['bak']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: web, port: "22", proto: tcp }
+        - { hostname: web, port: "443", proto: tcp }
+
+    - name: Create and start services
+      become: true
+      ansible.builtin.shell:
+        cmd: docker compose up --build -d
+        chdir: "{{ ansible_env['HOME'] }}"
+
+- name: Configure Clients
+  hosts: clients
+  tasks:
+    - name: Add admin SSH private key (client)
+      ansible.builtin.copy:
+        src: secrets/ssh/admin_ssh
+        dest: "{{ ansible_env['HOME'] }}/.ssh/id_rsa"
+        owner: "{{ ansible_env['USER'] }}"
+        group: "{{ ansible_env['USER'] }}"
+        mode: "0600"
+
+    - name: Add admin SSH public key (client)
+      ansible.builtin.copy:
+        src: secrets/ssh/admin_ssh.pub
+        dest: "{{ ansible_env['HOME'] }}/.ssh/id_rsa.pub"
+        owner: "{{ ansible_env['USER'] }}"
+        group: "{{ ansible_env['USER'] }}"
+        mode: "0600"
+
+    - name: Add web to /etc/hosts
+      become: true
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ item.ip }} {{ item.alias }}"
+      loop:
+        - { ip: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}", alias: imovies.ch }
+
+    - name: Install xubuntu-desktop
+      become: true
+      ansible.builtin.apt:
+        name: xubuntu-desktop
+        update_cache: true
