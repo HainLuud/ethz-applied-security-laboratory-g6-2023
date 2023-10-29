@@ -2,15 +2,8 @@
 - name: Configure Servers
   hosts: servers
   roles:
-    - role: geerlingguy.pip
-      become: true
     - role: geerlingguy.docker
       become: true
-  pre_tasks:
-    - name: Update repositories cache
-      become: true
-      ansible.builtin.apt:
-        update_cache: yes
   tasks:
     - name: Add admin SSH private key (web)
       ansible.builtin.copy:
@@ -43,16 +36,6 @@
         owner: "{{ ansible_env['USER'] }}"
         group: "{{ ansible_env['USER'] }}"
         mode: "0755"
-
-    - name: Install Python packages
-      become: true
-      ansible.builtin.pip:
-        name: "{{ item.name }}"
-        state: "{{ item.state | default(omit) }}"
-      loop:
-        - { name: pyOpenSSL, state: latest }  # See: https://github.com/geerlingguy/ansible-role-pip/issues/56
-        - { name: docker }
-        - { name: docker-compose }
 
     - name: Add machines to /etc/hosts
       become: true
