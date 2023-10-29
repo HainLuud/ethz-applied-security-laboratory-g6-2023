@@ -16,9 +16,9 @@
                 <label for="uid" class="label pt-0">
                   <span class="label-text font-medium leading-6">User ID</span>
                 </label>
-                <div class="input input-bordered input-sm flex">
+                <div class="input input-bordered input-sm input-disabled flex">
                   <span class="flex select-none items-center text-gray-500 sm:text-sm">imovies.ch/profile/</span>
-                  <input type="text" id="uid" name="uid" value="{{ user.uid }}" class="block flex-1 border-0 bg-transparent py-1.5" required disabled>
+                  <input type="text" id="uid" name="uid" value="{{ user.uid }}" class="block flex-1 border-0 bg-transparent py-1.5 cursor-not-allowed" required disabled>
                 </div>
               </div>
 
@@ -26,7 +26,7 @@
                 <label for="email" class="label pt-0">
                   <span class="label-text font-medium leading-6">Email address</span>
                 </label>
-                <input type="email" id="email" name="email" value="{{ user.email }}" class="input input-bordered input-sm" required>
+                <input type="email" id="email" name="email" value="{{ user.email }}" class="input input-bordered input-sm" required {% if not g.user.is_admin %}disabled{% endif %}>
               </div>
 
               <div class="form-control sm:col-span-3">

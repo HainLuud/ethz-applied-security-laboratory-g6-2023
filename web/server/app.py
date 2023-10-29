@@ -316,12 +316,13 @@ def post_issue(uid):
     email = request.form.get('email')
     passphrase = request.form.get('passphrase')
 
-    if not lastname or not firstname or not email or not passphrase:
+    if not lastname or not firstname or (g.user.is_admin and not email) or not passphrase:
         abort(400)
 
     user.lastname = lastname
     user.firstname = firstname
-    user.email = email
+    if g.user.is_admin:
+        user.email = email
 
     revoke = db.session.is_modified(user)
 
