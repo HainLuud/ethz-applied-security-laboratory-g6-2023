@@ -5,12 +5,12 @@ services:
     restart: unless-stopped
     hostname: ca
     secrets:
-      - ca-root-cert
-      - ca-root-key
-      - ca-cert
-      - ca-key
+      - ca_root_cert
+      - ca_root_key
+      - ca_cert
+      - ca_key
     volumes:
-      - ca-data:/app/data
+      - ca_data:/app/data
       - ./secrets/admin.imovies.ch.crt:/app/data/clients/admin/15654392993111371456575333615027215480854870364_cert.crt:ro
     environment:
       - TZ=Etc/UTC
@@ -24,29 +24,29 @@ services:
     restart: unless-stopped
     hostname: ca
     secrets:
-      - ca-root-cert
-      - ca-bak-repository
-      - ca-bak-password
+      - ca_root_cert
+      - ca_bak_repository
+      - ca_bak_password
     volumes:
       - ./scheduled-backup/profiles.yaml:/etc/resticprofile/profiles.yaml:ro
-      - ca-data:/resticprofile/ca-data
+      - ca_data:/resticprofile/ca_data
     environment:
       - TZ=Etc/UTC
     entrypoint: /bin/sh
     command: ['-c', 'resticprofile schedule --all && crond -f']
     user: 0:0  # 'resticprofile schedule' requires root
 volumes:
-  ca-data:
+  ca_data:
 secrets:
-  ca-root-cert:
+  ca_root_cert:
     file: secrets/root.imovies.ch.crt
-  ca-root-key:
+  ca_root_key:
     file: secrets/root.imovies.ch.key
-  ca-cert:
+  ca_cert:
     file: secrets/ca.imovies.ch.crt
-  ca-key:
+  ca_key:
     file: secrets/ca.imovies.ch.key
-  ca-bak-repository:
+  ca_bak_repository:
     file: secrets/bak_repository.txt
-  ca-bak-password:
+  ca_bak_password:
     file: secrets/bak_password.txt

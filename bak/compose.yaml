@@ -5,23 +5,23 @@ services:
     restart: unless-stopped
     hostname: bak
     secrets:
-      - bak-cert
-      - bak-key
-      - bak-htpasswd
+      - bak_cert
+      - bak_key
+      - bak_htpasswd
     volumes:
-      - bak-data:/app/data
+      - bak_data:/app/data
     environment:
       - TZ=Etc/UTC
-      - OPTIONS=--append-only --htpasswd-file /run/secrets/bak-htpasswd --private-repos --tls --tls-cert /run/secrets/bak-cert --tls-key /run/secrets/bak-key
+      - OPTIONS=--append-only --htpasswd-file /run/secrets/bak_htpasswd --private-repos --tls --tls-cert /run/secrets/bak_cert --tls-key /run/secrets/bak_key
     ports:
       - "${BAK_PORT}:8000"
     user: 10001:10001
 volumes:
-  bak-data:
+  bak_data:
 secrets:
-  bak-cert:
+  bak_cert:
     file: secrets/bak.imovies.ch.crt
-  bak-key:
+  bak_key:
     file: secrets/bak.imovies.ch.key
-  bak-htpasswd:
+  bak_htpasswd:
     file: secrets/.htpasswd

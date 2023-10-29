@@ -4,8 +4,8 @@ import socket
 LOG_HOST = os.getenv('LOG_HOST')
 
 wsgi_app = 'ca_api:app'
-certfile = '/run/secrets/ca-cert'
-keyfile = '/run/secrets/ca-key'
+certfile = '/run/secrets/ca_cert'
+keyfile = '/run/secrets/ca_key'
 bind = '0.0.0.0:8000'
 loglevel = 'DEBUG'
 logconfig_dict = {
@@ -53,7 +53,7 @@ logconfig_dict = {
             'socktype': socket.SOCK_STREAM,
             'tls_enable': True,
             'tls_verify': True,
-            'tls_ca_bundle': '/run/secrets/ca-root-cert',
+            'tls_ca_bundle': '/run/secrets/ca_root_cert',
         }
     },
     'formatters': {

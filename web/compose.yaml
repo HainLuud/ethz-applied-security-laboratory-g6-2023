@@ -5,29 +5,29 @@ services:
     restart: unless-stopped
     hostname: web
     secrets:
-      - ca-root-cert
-      - db-password
-      - web-secret-key
-      - web-csrf-secret-key
+      - ca_root_cert
+      - db_password
+      - web_secret_key
+      - web_csrf_secret-key
     environment:
       - TZ=Etc/UTC
       - DATABASE_DB=imovies
       - DATABASE_USER=web
-      - DATABASE_PASSWORD_FILE=/run/secrets/db-password
+      - DATABASE_PASSWORD_FILE=/run/secrets/db_password
       - DATABASE_HOST=db.imovies.ch:3306
       - CA_HOST=ca.imovies.ch:443
       - LOG_HOST=log.imovies.ch:514
-      - WEB_SECRET_KEY_FILE=/run/secrets/web-secret-key
-      - WEB_CSRF_SECRET_KEY_FILE=/run/secrets/web-csrf-secret-key
+      - WEB_SECRET_KEY_FILE=/run/secrets/web_secret_key
+      - WEB_CSRF_SECRET_KEY_FILE=/run/secrets/web_csrf_secret-key
     user: 10001:10001
   proxy:
     image: nginxinc/nginx-unprivileged:latest
     restart: unless-stopped
     hostname: web
     secrets:
-      - ca-root-cert
-      - web-cert
-      - web-key
+      - ca_root_cert
+      - web_cert
+      - web_key
     volumes:
       - ./proxy/default.conf.template:/etc/nginx/templates/default.conf.template:ro
     environment:
@@ -38,15 +38,15 @@ services:
       - "${WEB_PORT}:8000"
     user: 101:101
 secrets:
-  ca-root-cert:
+  ca_root_cert:
     file: secrets/root.imovies.ch.crt
-  db-password:
+  db_password:
     file: secrets/db_password.txt
-  web-secret-key:
+  web_secret_key:
     file: secrets/web_secret_key.txt
-  web-csrf-secret-key:
+  web_csrf_secret-key:
     file: secrets/web_csrf_secret_key.txt
-  web-cert:
+  web_cert:
     file: secrets/web.imovies.ch.crt
-  web-key:
+  web_key:
     file: secrets/web.imovies.ch.key

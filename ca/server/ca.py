@@ -48,9 +48,9 @@ class CA:
 
     # hard-coded file paths
     SAFE_DIR = '/app/data/clients/'
-    root_certificate_path = '/run/secrets/ca-root-cert'
-    #pub_key_path = '/run/secrets/ca-root-pub'
-    priv_key_path = '/run/secrets/ca-root-key'
+    root_certificate_path = '/run/secrets/ca_root_cert'
+    #pub_key_path = '/run/secrets/ca_root_pub'
+    priv_key_path = '/run/secrets/ca_root_key'
     serial_id_path = '/app/data/ca/serial_id.txt'
     crl_path = '/app/data/ca/crl.pem'
 

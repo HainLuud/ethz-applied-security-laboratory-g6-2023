@@ -128,5 +128,5 @@ def get_ca_status():
 
 
 if __name__ == "__main__":
-    context = ('/run/secrets/ca-cert', '/run/secrets/ca-key')
+    context = ('/run/secrets/ca_cert', '/run/secrets/ca_key')
     app.run(debug=True, host='0.0.0.0', port=8000, sslcontext=context)

@@ -5,12 +5,12 @@ services:
     restart: unless-stopped
     hostname: log
     secrets:
-      - ca-root-cert
-      - log-cert
-      - log-key
+      - ca_root_cert
+      - log_cert
+      - log_key
     volumes:
       - ./server/rsyslog.conf:/etc/rsyslog.conf:ro
-      - log-data:/logs
+      - log_data:/logs
     environment:
       - TZ=Etc/UTC
       - CONTAINER_SILENT=on
@@ -22,27 +22,27 @@ services:
     restart: unless-stopped
     hostname: log
     secrets:
-      - ca-root-cert
-      - log-bak-repository
-      - log-bak-password
+      - ca_root_cert
+      - log_bak_repository
+      - log_bak_password
     volumes:
       - ./scheduled-backup/profiles.yaml:/etc/resticprofile/profiles.yaml:ro
-      - log-data:/resticprofile/log-data
+      - log_data:/resticprofile/log_data
     environment:
       - TZ=Etc/UTC
     entrypoint: /bin/sh
     command: ['-c', 'resticprofile schedule --all && crond -f']
     user: 0:0  # 'resticprofile schedule' requires root
 volumes:
-  log-data:
+  log_data:
 secrets:
-  ca-root-cert:
+  ca_root_cert:
     file: secrets/root.imovies.ch.crt
-  log-cert:
+  log_cert:
     file: secrets/log.imovies.ch.crt
-  log-key:
+  log_key:
     file: secrets/log.imovies.ch.key
-  log-bak-repository:
+  log_bak_repository:
     file: secrets/bak_repository.txt
-  log-bak-password:
+  log_bak_password:
     file: secrets/bak_password.txt

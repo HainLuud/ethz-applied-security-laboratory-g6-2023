@@ -46,7 +46,7 @@ logconfig_dict = {
             'socktype': socket.SOCK_STREAM,
             'tls_enable': True,
             'tls_verify': True,
-            'tls_ca_bundle': '/run/secrets/ca-root-cert',
+            'tls_ca_bundle': '/run/secrets/ca_root_cert',
         }
     },
     'formatters': {

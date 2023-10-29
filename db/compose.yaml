@@ -4,35 +4,35 @@ services:
     restart: unless-stopped
     hostname: db
     secrets:
-      - ca-root-cert
-      - db-cert
-      - db-key
-      - db-root-password
-      - db-password
+      - ca_root_cert
+      - db_cert
+      - db_key
+      - db_root_password
+      - db_password
     volumes:
       - ./server/imovies_users.dump:/docker-entrypoint-initdb.d/init.sql:ro
       - ./server/update.sql:/docker-entrypoint-initdb.d/update.sql:ro
-      - db-data:/var/lib/mysql
-      - db-logs:/var/lib/mysql-files
+      - db_data:/var/lib/mysql
+      - db_logs:/var/lib/mysql-files
     environment:
       - TZ=Etc/UTC
       - MYSQL_DATABASE=imovies
-      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db-root-password
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
       - MYSQL_USER=web
-      - MYSQL_PASSWORD_FILE=/run/secrets/db-password
+      - MYSQL_PASSWORD_FILE=/run/secrets/db_password
     command:
       - --default-authentication-plugin=caching_sha2_password
-      - --ssl-ca=/run/secrets/ca-root-cert
-      - --ssl-cert=/run/secrets/db-cert
-      - --ssl-key=/run/secrets/db-key
+      - --ssl-ca=/run/secrets/ca_root_cert
+      - --ssl-cert=/run/secrets/db_cert
+      - --ssl-key=/run/secrets/db_key
       - --require-secure-transport=ON
-      - --log-error=/var/lib/mysql-files/error.log
+      - --log_error=/var/lib/mysql-files/error.log
       - --general-log=1
-      - --general-log-file=/var/lib/mysql-files/general.log
+      - --general-log_file=/var/lib/mysql-files/general.log
     ports:
       - "${DB_PORT}:3306"
     healthcheck:
-      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u root --password="$$(cat /run/secrets/db-root-password)" --silent']
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u root --password="$$(cat /run/secrets/db_root_password)" --silent']
       interval: 3s
       retries: 5
       start_period: 30s
@@ -42,12 +42,12 @@ services:
     restart: unless-stopped
     hostname: db
     secrets:
-      - ca-root-cert
-      - db-bak-repository
-      - db-bak-password
+      - ca_root_cert
+      - db_bak_repository
+      - db_bak_password
     volumes:
       - ./scheduled-backup/profiles.yaml:/etc/resticprofile/profiles.yaml:ro
-      - db-data:/resticprofile/db-data
+      - db_data:/resticprofile/db_data
     environment:
       - TZ=Etc/UTC
     entrypoint: /bin/sh
@@ -59,29 +59,29 @@ services:
     restart: unless-stopped
     hostname: db
     secrets:
-      - ca-root-cert
+      - ca_root_cert
     volumes:
       - ./logger/rsyslog.conf:/etc/rsyslog.conf:ro
-      - db-logs:/var/log/mysql
+      - db_logs:/var/log/mysql
     environment:
       - TZ=Etc/UTC
       - CONTAINER_SILENT=on
-    user: 0:0  # Requires root to read db-logs
+    user: 0:0  # Requires root to read db_logs
 secrets:
-  ca-root-cert:
+  ca_root_cert:
     file: secrets/root.imovies.ch.crt
-  db-cert:
+  db_cert:
     file: secrets/db.imovies.ch.crt
-  db-key:
+  db_key:
     file: secrets/db.imovies.ch.key
-  db-root-password:
+  db_root_password:
     file: secrets/db_root_password.txt
-  db-password:
+  db_password:
     file: secrets/db_password.txt
-  db-bak-repository:
+  db_bak_repository:
     file: secrets/bak_repository.txt
-  db-bak-password:
+  db_bak_password:
     file: secrets/bak_password.txt
 volumes:
-  db-data:
-  db-logs:
+  db_data:
+  db_logs:

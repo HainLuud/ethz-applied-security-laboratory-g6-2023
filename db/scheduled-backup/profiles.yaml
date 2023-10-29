@@ -6,9 +6,9 @@ global:
   scheduler: crond
 
 default:
-  repository-file: /run/secrets/db-bak-repository
-  password-file: /run/secrets/db-bak-password
-  cacert: /run/secrets/ca-root-cert
+  repository-file: /run/secrets/db_bak_repository
+  password-file: /run/secrets/db_bak_password
+  cacert: /run/secrets/ca_root_cert
   initialize: true
 
   backup:
