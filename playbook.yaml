@@ -109,7 +109,7 @@
         path: /etc/hosts
         line: "{{ item.ip }} {{ item.alias }}"
       loop:
-        - { ip: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}", alias: imovies.ch }
+        - { ip: "{{ hostvars['web']['ansible_enp0s9']['ipv4']['address'] }}", alias: imovies.ch }
 
     - name: Install xubuntu-desktop
       become: true
