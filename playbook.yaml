@@ -116,3 +116,6 @@
       ansible.builtin.apt:
         name: xubuntu-desktop
         update_cache: true
+
+    - name: Reboot the machine
+      ansible.builtin.reboot:
