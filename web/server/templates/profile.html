@@ -67,18 +67,20 @@
             </div>
 
             <div class="w-full mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-10">
-              <div class="form-control sm:col-span-5">
+              {% if not g.user.is_admin %}
+                <div class="form-control sm:col-span-5">
+                  <label for="oldpwd" class="label pt-0">
+                    <span class="label-text font-medium leading-6">Old password</span>
+                  </label>
+                  <input type="password" id="oldpwd" name="oldpwd" class="input input-bordered input-sm" required>
+                </div>
+              {% endif %}
+
+              <div class="form-control {% if not g.user.is_admin %}sm:col-span-5{% else %}col-span-full{% endif %}">
                 <label for="pwd" class="label pt-0">
                   <span class="label-text font-medium leading-6">New password</span>
                 </label>
                 <input type="password" id="pwd" name="pwd" class="input input-bordered input-sm" required>
-              </div>
-
-              <div class="form-control sm:col-span-5">
-                <label for="pwd2" class="label pt-0">
-                  <span class="label-text font-medium leading-6">Confirm new password</span>
-                </label>
-                <input type="password" id="pwd2" name="pwd2" class="input input-bordered input-sm" required>
               </div>
             </div>
 

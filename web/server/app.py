@@ -73,7 +73,7 @@ class User(db.Model):
         return self.uid
 
     def update_pwd(self, pwd: str) -> str:
-        return bcrypt.hashpw(pwd.encode(), bcrypt.gensalt())
+        self.pwd = bcrypt.hashpw(pwd.encode(), bcrypt.gensalt())
 
     def check_pwd(self, pwd: str) -> bool:
         return bcrypt.checkpw(pwd.encode(), self.pwd.encode())
@@ -274,7 +274,7 @@ def get_profile(uid):
 @app.post('/profile/<string:uid>/change_password')
 @login_required
 def post_change_password(uid):
-    if not g.user.is_admin and g.user.uid != uid:
+    if (g.user.is_admin and g.user.uid == uid) or (not g.user.is_admin and g.user.uid != uid):
         abort(403)
 
     user = db.session.get(User, uid)
@@ -283,14 +283,19 @@ def post_change_password(uid):
         abort(404)
 
     pwd = request.form.get('pwd')
-    pwd2 = request.form.get('pwd2')
 
-    if not pwd or not pwd2:
+    if not pwd:
         abort(400)
 
-    if pwd != pwd2:
-        flash('The passwords provided are different.', 'error')
-        return redirect(url_for('get_profile', uid=user.uid))
+    if not g.user.is_admin:
+        oldpwd = request.form.get('oldpwd')
+
+        if not oldpwd:
+            abort(400)
+
+        if not user.check_pwd(oldpwd):
+            flash('Wrong old password.', 'error')
+            return redirect(url_for('get_profile', uid=user.uid))
 
     user.update_pwd(pwd)
 
