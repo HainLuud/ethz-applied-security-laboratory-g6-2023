@@ -4,15 +4,9 @@
   roles:
     - role: geerlingguy.docker
       become: true
+  vars:
+    vagrant_pw: "{{ lookup('file', 'secrets/user_passwords/vagrant_pw.txt') }}"
   tasks:
-    - name: Add admin SSH private key (web)
-      ansible.builtin.copy:
-        src: secrets/ssh/admin_ssh
-        dest: "{{ ansible_env['HOME'] }}/.ssh/id_rsa"
-        owner: "{{ ansible_env['USER'] }}"
-        group: "{{ ansible_env['USER'] }}"
-        mode: "0600"
-      when: inventory_hostname == 'web'
 
     - name: Add admin SSH public key (web)
       ansible.builtin.copy:
@@ -84,6 +78,21 @@
         cmd: docker compose up --build -d
         chdir: "{{ ansible_env['HOME'] }}"
 
+    - name: Change vagrant password
+      become: true
+      ansible.builtin.user:
+        name: vagrant
+        password: "{{ vagrant_pw | password_hash('sha512') }}"
+
+    - name: Disallow passwordless sudo
+      become: true
+      copy:
+        content: "vagrant ALL=(ALL) ALL"
+        dest: "/etc/sudoers.d/vagrant"
+        owner: root
+        group: root
+        mode: "0600"
+
 - name: Configure Clients
   hosts: clients
   tasks:
@@ -116,6 +125,3 @@
       ansible.builtin.apt:
         name: xubuntu-desktop
         update_cache: true
-
-    - name: Reboot the machine
-      ansible.builtin.reboot:
