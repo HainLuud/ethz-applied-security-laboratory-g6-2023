@@ -4,8 +4,6 @@
   roles:
     - role: geerlingguy.docker
       become: true
-  vars:
-    vagrant_pw: "{{ lookup('file', 'secrets/user_passwords/vagrant_pw.txt') }}"
   tasks:
 
     - name: Add admin SSH public key (web)
@@ -80,9 +78,16 @@
 
     - name: Change vagrant password
       become: true
-      ansible.builtin.user:
+      ansible.builtin.user: 
         name: vagrant
-        password: "{{ vagrant_pw | password_hash('sha512') }}"
+        password: "{{ item.pw | password_hash('sha512') }}"
+      when: inventory_hostname == item.hostname
+      loop:
+        - { hostname: bak, pw: "{{ lookup('file', 'secrets/user_passwords/bak_pw.txt') }}" }
+        - { hostname: log, pw: "{{ lookup('file', 'secrets/user_passwords/log_pw.txt') }}" }
+        - { hostname: db, pw: "{{ lookup('file', 'secrets/user_passwords/db_pw.txt') }}" }
+        - { hostname: ca, pw: "{{ lookup('file', 'secrets/user_passwords/ca_pw.txt') }}" }
+        - { hostname: web, pw: "{{ lookup('file', 'secrets/user_passwords/web_pw.txt') }}" }
 
     - name: Disallow passwordless sudo
       become: true

@@ -49,7 +49,6 @@ class CA:
     # hard-coded file paths
     SAFE_DIR = '/app/data/clients/'
     root_certificate_path = '/run/secrets/ca_root_cert'
-    #pub_key_path = '/run/secrets/ca_root_pub'
     priv_key_path = '/run/secrets/ca_root_key'
     serial_id_path = '/app/data/ca/serial_id.txt'
     crl_path = '/app/data/ca/crl.pem'
@@ -62,9 +61,7 @@ class CA:
         self.logger = logging.getLogger(__name__)
         self.revocation_list = []
         self.serial_id = self.get_initial_serial_id()
-        self.private_key_password = urandom(64) # TODO: how to store passphrase securely
-        #self.create_keypair()
-        #self.generate_root_certificate()
+        self.private_key_password = urandom(64)
         self.read_cert()
         self.create_crl()
         
@@ -82,7 +79,7 @@ class CA:
     '''
     def get_initial_serial_id(self):
         if not path.exists(self.serial_id_path):
-            return 1 #x509.random_serial_number() 
+            return 1 
         else:
             serial_id = self.load(self.serial_id_path, 'r')
             return int(serial_id)
@@ -105,13 +102,10 @@ class CA:
                                                               encryption_algorithm=BestAvailableEncryption(self.private_key_password))
         pem_public_key = private_key.public_key().public_bytes(encoding=PEM, format=SubjectPublicKeyInfo)
         
-        #self.logger.debug(encrypted_pem_private_key.decode())
-        #self.logger.debug(pem_public_key.decode())
         self.logger.info("Generated new key pair!")
 
         # write serialised keys to files
         self.store(self.priv_key_path, 'wb+', encrypted_pem_private_key)
-        #self.store(self.pub_key_path, 'wb+', pem_public_key)
     
     '''
     Loads the private key of the CA from the file.
@@ -171,7 +165,7 @@ class CA:
                                              .add_extension(subject_key_id, critical=False) \
                                              .sign(private_key, hashes.SHA256())
         self.root_cert_pem = self.root_cert.public_bytes(encoding=PEM)
-        #self.logger.debug(self.root_cert_pem.decode())
+
         self.logger.debug("Generated new certificate!")
         
         self.store(self.root_certificate_path, 'wb+', self.root_cert_pem)
@@ -208,7 +202,7 @@ class CA:
         client_private_key = rsa.generate_private_key(public_exponent=self.EXPONENT, key_size=self.BITS, )
 
         pem_client_private_key = client_private_key.private_bytes(encoding=PEM, format=TraditionalOpenSSL,
-                                                                  encryption_algorithm=BestAvailableEncryption(passphrase)) # PKCS12 already uses passphrase
+                                                                  encryption_algorithm=BestAvailableEncryption(passphrase)) 
         self.logger.info("Generated new client key pair!")
         self.logger.debug("Generating new client certificate ...")
         
@@ -459,12 +453,11 @@ class CA:
         if not self.get_status()[3]:
             raise Exception("Backup server is not up.")
 
-        # verify certificate
         if not self.verify_certificate(cert, True):
             raise Exception('You don\'t have admin permission')
         user = User(uid='admin', lastname='', firstname='', email='admin@imovies.ch')
         self.issue_certificate(user=user, cert=cert, passphrase=passphrase, revoke=True, authenticated=True)
-        # don't return admin certificate
+
 
     def verify_certificate(self, cert: bytes, isAdmin: bool):
         if not cert:
@@ -475,8 +468,6 @@ class CA:
 
         cert = x509.load_pem_x509_certificate(cert, default_backend())
 
-
-        # check uid (+ common name, email for admins)
         commonname = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
         uid_commonname = commonname.split('.')[0]
 
@@ -495,8 +486,8 @@ class CA:
         revoked = isinstance(revoked_cert, x509.RevokedCertificate)
 
         print(cert.not_valid_before)
-        before = cert.not_valid_before # datetime.datetime.strptime(cert.not_valid_before, '%Y%m%d%H%M%SZ')
-        after = cert.not_valid_after # datetime.datetime.strptime(cert.not_valid_after, '%Y%m%d%H%M%SZ')
+        before = cert.not_valid_before
+        after = cert.not_valid_after 
         now = datetime.datetime.now()
         expired = (before > now) or (after < now) or (after < before)
         return not revoked and not expired
@@ -506,7 +497,7 @@ class CA:
     Returns the number of issued certificates, revoked certificates, and the current serial id. 
     '''
     def get_status(self):
-        n_issued = self.serial_id - 1 # since we start at 1
+        n_issued = self.serial_id - 1 
 
         crl_data = self.load(self.crl_path, "rb")
         crl = x509.load_pem_x509_crl(crl_data)
