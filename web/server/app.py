@@ -33,6 +33,11 @@ with open(WEB_CSRF_SECRET_KEY_FILE, 'r') as f:
     WEB_CSRF_SECRET_KEY = f.read().strip()
 CA_HOST = os.getenv('CA_HOST')
 
+MIN_PASSWORD_LENGTH = 14
+MAX_PASSWORD_LENGTH = 72
+MIN_PASSPHRASE_LENGTH = 14
+MAX_PASSPHRASE_LENGTH = 32
+
 app = Flask(__name__)
 Talisman(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+mysqlconnector://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_DB}'
@@ -268,7 +273,11 @@ def get_profile(uid):
         app.logger.exception('')
         certificates = None
 
-    return render_template('profile.html', user=user, certificates=certificates)
+    return render_template(
+        'profile.html', MIN_PASSWORD_LENGTH=MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH=MAX_PASSWORD_LENGTH,
+        MIN_PASSPHRASE_LENGTH=MIN_PASSPHRASE_LENGTH, MAX_PASSPHRASE_LENGTH=MAX_PASSPHRASE_LENGTH, user=user,
+        certificates=certificates
+    )
 
 
 @app.post('/profile/<string:uid>/change_password')
@@ -284,7 +293,7 @@ def post_change_password(uid):
 
     pwd = request.form.get('pwd')
 
-    if not pwd:
+    if not pwd or not (MIN_PASSWORD_LENGTH <= len(pwd) <= MAX_PASSWORD_LENGTH):
         abort(400)
 
     if not g.user.is_admin:
@@ -321,7 +330,10 @@ def post_issue(uid):
     email = request.form.get('email')
     passphrase = request.form.get('passphrase')
 
-    if not lastname or not firstname or (g.user.is_admin and not email) or not passphrase:
+    if (
+        not lastname or not firstname or (g.user.is_admin and not email) or not passphrase or
+        not (MIN_PASSPHRASE_LENGTH <= len(passphrase) <= MAX_PASSPHRASE_LENGTH)
+    ):
         abort(400)
 
     user.lastname = lastname
@@ -402,7 +414,7 @@ def post_renew(uid):
 
     passphrase = request.form.get('passphrase')
 
-    if not passphrase:
+    if not passphrase or not (MIN_PASSPHRASE_LENGTH <= len(passphrase) <= MAX_PASSPHRASE_LENGTH):
         abort(400)
 
     try:

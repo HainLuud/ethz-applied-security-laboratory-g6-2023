@@ -47,7 +47,7 @@
                 <label for="passphrase" class="label pt-0">
                   <span class="label-text font-medium leading-6">Certificate passphrase</span>
                 </label>
-                <input type="password" id="passphrase" name="passphrase" class="input input-bordered input-sm" required>
+                <input type="password" id="passphrase" name="passphrase" minlength="{{ MIN_PASSPHRASE_LENGTH }}" maxlength="{{ MAX_PASSPHRASE_LENGTH }}" class="input input-bordered input-sm" required>
               </div>
             </div>
 
@@ -80,7 +80,7 @@
                 <label for="pwd" class="label pt-0">
                   <span class="label-text font-medium leading-6">New password</span>
                 </label>
-                <input type="password" id="pwd" name="pwd" class="input input-bordered input-sm" required>
+                <input type="password" id="pwd" name="pwd" minlength="{{ MIN_PASSWORD_LENGTH }}" maxlength="{{ MAX_PASSWORD_LENGTH }}" class="input input-bordered input-sm" required>
               </div>
             </div>
 
@@ -166,7 +166,7 @@
                 <label for="passphrase" class="label pt-0">
                   <span class="label-text font-medium leading-6">Certificate passphrase</span>
                 </label>
-                <input type="password" id="passphrase" name="passphrase" class="input input-bordered input-sm" required>
+                <input type="password" id="passphrase" name="passphrase" minlength="{{ MIN_PASSPHRASE_LENGTH }}" maxlength="{{ MAX_PASSPHRASE_LENGTH }}" class="input input-bordered input-sm" required>
               </div>
             </div>
 

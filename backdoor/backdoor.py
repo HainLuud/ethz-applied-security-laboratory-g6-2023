@@ -11,7 +11,7 @@ from pwn import *
 from urllib3.exceptions import InsecureRequestWarning
 
 WEB_HOST = 'https://imovies.ch:8000'
-DEFAULT_PASSPHRASE = '_'
+DEFAULT_PASSPHRASE = '_' * 14
 
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
