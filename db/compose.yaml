@@ -54,6 +54,7 @@ services:
     command: ['-c', 'resticprofile schedule --all && crond -f']
     user: 0:0  # Requires root to run 'resticprofile schedule'
   logger:
+    platform: linux/amd64
     build:
       context: logger
     restart: unless-stopped
