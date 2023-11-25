@@ -33,7 +33,7 @@ Vagrant.configure("2") do |config|
             end
 
             if servers.include?(machine_name)
-                main_ip = "192.168.56.#{servers.length() - servers.index(machine_name)}"
+                main_ip = "192.168.56.#{servers.length() - servers.index(machine_name) + 1}"
                 machine.vm.network "private_network", ip: main_ip, hostname: true
             end
 
