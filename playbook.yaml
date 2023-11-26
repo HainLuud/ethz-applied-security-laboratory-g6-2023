@@ -89,15 +89,6 @@
         - { hostname: ca, pw: "{{ lookup('file', 'secrets/user_passwords/ca_pw.txt') }}" }
         - { hostname: web, pw: "{{ lookup('file', 'secrets/user_passwords/web_pw.txt') }}" }
 
-    - name: Disallow passwordless sudo
-      become: true
-      copy:
-        content: "vagrant ALL=(ALL) ALL"
-        dest: "/etc/sudoers.d/vagrant"
-        owner: root
-        group: root
-        mode: "0600"
-
 - name: Configure Clients
   hosts: clients
   tasks:
