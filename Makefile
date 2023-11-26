@@ -37,7 +37,7 @@ stop-docker:
 stop-vagrant:
 	@vagrant halt
 
-$(PACKAGE_DIR):
+$(PACKAGE_DIR): clean-vagrant vagrant
 	@scripts/package.sh "$(PACKAGE_DIR)"
 
 $(OBFUSCATE_DIR):
