@@ -1,36 +1,37 @@
 ---
 - name: Configure Servers
   hosts: servers
+  become: true
   roles:
     - role: geerlingguy.docker
-      become: true
   tasks:
+    - name: Disable Vagrant password authentication
+      ansible.builtin.user:
+        name: vagrant
+        password: '*'
 
-    - name: Add admin SSH public key (web)
-      ansible.builtin.copy:
-        src: secrets/ssh/admin_ssh.pub
-        dest: "{{ ansible_env['HOME'] }}/.ssh/id_rsa.pub"
-        owner: "{{ ansible_env['USER'] }}"
-        group: "{{ ansible_env['USER'] }}"
-        mode: "0600"
-      when: inventory_hostname == 'web'
+    - name: Create sysadmin user
+      ansible.builtin.user:
+        name: sysadmin
+        password: "{{ lookup('file', 'secrets/user_passwords/' ~ inventory_hostname ~ '_sysadmin_pw.txt') | password_hash }}"
+        shell: /bin/bash
+        groups: sudo
 
-    - name: Authorize admin SSH public key
+    - name: Authorize sysadmin SSH public key
       ansible.posix.authorized_key:
-        user: "{{ ansible_env['USER'] }}"
+        user: sysadmin
         state: present
-        key: "{{ lookup('file', 'secrets/ssh/admin_ssh.pub') }}"
+        key: "{{ lookup('file', 'secrets/ssh/sysadmin_ssh.pub') }}"
 
     - name: Copy machine directory
       ansible.builtin.copy:
-        src: "{{ inventory_hostname }}/"
-        dest: "{{ ansible_env['HOME'] }}"
-        owner: "{{ ansible_env['USER'] }}"
-        group: "{{ ansible_env['USER'] }}"
-        mode: "0755"
+        src: "{{ inventory_hostname }}"
+        dest: /root
+        owner: root
+        group: root
+        mode: '0755'
 
     - name: Add machines to /etc/hosts
-      become: true
       ansible.builtin.lineinfile:
         path: /etc/hosts
         line: "{{ item.ip }} {{ item.alias }}"
@@ -42,14 +43,12 @@
         - { ip: "{{ hostvars['bak']['ansible_enp0s8']['ipv4']['address'] }}", alias: bak.imovies.ch }
     
     - name: Enable firewall and set default deny policy
-      become: true
       community.general.ufw:
         state: enabled
         default: deny
-        logging: true
+        logging: 'on'
 
     - name: Set firewall allow rules
-      become: true
       community.general.ufw:
         rule: allow
         port: "{{ item.port | default(omit) }}"
@@ -57,59 +56,75 @@
         src: "{{ item.src | default(omit) }}"
       when: item.hostname is not defined or inventory_hostname == item.hostname
       loop:
-        - { port: "22", proto: tcp, src: "{{ ansible_env['SSH_CLIENT'].split() | first }}" }
-        - { port: "22", proto: tcp, src: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}" }
-        - { hostname: bak, port: "443", proto: tcp, src: "{{ hostvars['db']['ansible_enp0s8']['ipv4']['address'] }}" }
-        - { hostname: bak, port: "443", proto: tcp, src: "{{ hostvars['ca']['ansible_enp0s8']['ipv4']['address'] }}" }
-        - { hostname: bak, port: "443", proto: tcp, src: "{{ hostvars['log']['ansible_enp0s8']['ipv4']['address'] }}" }
-        - { hostname: log, port: "514", proto: tcp, src: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}" }
-        - { hostname: log, port: "514", proto: tcp, src: "{{ hostvars['ca']['ansible_enp0s8']['ipv4']['address'] }}" }
-        - { hostname: ca, port: "443", proto: tcp, src: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}" }
-        - { hostname: db, port: "3306", proto: tcp, src: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}" }
-        - { hostname: db, port: "3306", proto: tcp, src: "{{ hostvars['bak']['ansible_enp0s8']['ipv4']['address'] }}" }
-        - { hostname: web, port: "22", proto: tcp }
-        - { hostname: web, port: "443", proto: tcp }
+        - { port: '22', proto: tcp, src: "{{ ansible_env['SSH_CLIENT'].split() | first }}" }
+        - { port: '22', proto: tcp, src: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: bak, port: '443', proto: tcp, src: "{{ hostvars['db']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: bak, port: '443', proto: tcp, src: "{{ hostvars['ca']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: bak, port: '443', proto: tcp, src: "{{ hostvars['log']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: log, port: '514', proto: tcp, src: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: log, port: '514', proto: tcp, src: "{{ hostvars['ca']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: ca, port: '443', proto: tcp, src: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: db, port: '3306', proto: tcp, src: "{{ hostvars['web']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: db, port: '3306', proto: tcp, src: "{{ hostvars['bak']['ansible_enp0s8']['ipv4']['address'] }}" }
+        - { hostname: web, port: '22', proto: tcp }
+        - { hostname: web, port: '443', proto: tcp }
 
     - name: Create and start services
-      become: true
       ansible.builtin.shell:
         cmd: docker compose up --build -d
-        chdir: "{{ ansible_env['HOME'] }}"
-
-    - name: Change vagrant password
-      become: true
-      ansible.builtin.user: 
-        name: vagrant
-        password: "{{ item.pw | password_hash('sha512') }}"
-      when: inventory_hostname == item.hostname
-      loop:
-        - { hostname: bak, pw: "{{ lookup('file', 'secrets/user_passwords/bak_pw.txt') }}" }
-        - { hostname: log, pw: "{{ lookup('file', 'secrets/user_passwords/log_pw.txt') }}" }
-        - { hostname: db, pw: "{{ lookup('file', 'secrets/user_passwords/db_pw.txt') }}" }
-        - { hostname: ca, pw: "{{ lookup('file', 'secrets/user_passwords/ca_pw.txt') }}" }
-        - { hostname: web, pw: "{{ lookup('file', 'secrets/user_passwords/web_pw.txt') }}" }
+        chdir: "/root/{{ inventory_hostname }}"
 
 - name: Configure Clients
   hosts: clients
+  become: true
   tasks:
-    - name: Add admin SSH private key (client)
-      ansible.builtin.copy:
-        src: secrets/ssh/admin_ssh
-        dest: "{{ ansible_env['HOME'] }}/.ssh/id_rsa"
-        owner: "{{ ansible_env['USER'] }}"
-        group: "{{ ansible_env['USER'] }}"
-        mode: "0600"
+    - name: Disable Vagrant password authentication
+      ansible.builtin.user:
+        name: vagrant
+        password: '*'
 
-    - name: Add admin SSH public key (client)
+    - name: Create users
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        password: "{{ lookup('file', 'secrets/user_passwords/' ~ inventory_hostname ~ '_' ~ item.name ~ '_pw.txt') | password_hash }}"
+        shell: /bin/bash
+        groups: "{{ item.groups | default(omit) }}"
+      loop:
+        - { name: user }
+        - { name: caadmin }
+        - { name: sysadmin, groups: sudo }
+
+    - name: Create user folders
+      file:
+        path: "/home/{{ item.user }}/{{ item.folder }}"
+        state: directory
+        owner: "{{ item.user }}"
+        group: "{{ item.user }}"
+        mode: '0700'
+      loop:
+        - { user: caadmin, folder: Desktop }
+        - { user: sysadmin, folder: .ssh }
+
+    - name: Add caadmin certificate
       ansible.builtin.copy:
-        src: secrets/ssh/admin_ssh.pub
-        dest: "{{ ansible_env['HOME'] }}/.ssh/id_rsa.pub"
-        owner: "{{ ansible_env['USER'] }}"
-        group: "{{ ansible_env['USER'] }}"
-        mode: "0600"
+        src: ca/secrets/admin.imovies.ch.p12
+        dest: /home/caadmin/Desktop/cert.p12
+        owner: caadmin
+        group: caadmin
+        mode: '0600'
+
+    - name: Add sysadmin SSH key pair
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: sysadmin
+        group: sysadmin
+        mode: "{{ item.mode }}"
+      loop:
+        - { src: secrets/ssh/sysadmin_ssh, dest: /home/sysadmin/.ssh/id_rsa, mode: '0600' }
+        - { src: secrets/ssh/sysadmin_ssh.pub, dest: /home/sysadmin/.ssh/id_rsa.pub, mode: '0644' }
 
     - name: Add web to /etc/hosts
-      become: true
       ansible.builtin.lineinfile:
         path: /etc/hosts
         line: "{{ item.ip }} {{ item.alias }}"
@@ -117,7 +132,9 @@
         - { ip: "{{ hostvars['web']['ansible_enp0s9']['ipv4']['address'] }}", alias: imovies.ch }
 
     - name: Install xubuntu-desktop
-      become: true
       ansible.builtin.apt:
         name: xubuntu-desktop
         update_cache: true
+
+    - name: Reboot the machine
+      ansible.builtin.reboot:

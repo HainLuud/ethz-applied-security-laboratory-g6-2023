@@ -4,6 +4,11 @@
 Vagrant.configure("2") do |config|
     config.vm.synced_folder ".", "/vagrant", disabled: true
 
+    if Vagrant.has_plugin?("vagrant-vbguest")
+        config.vbguest.auto_update = false
+        config.vbguest.no_remote = true
+    end
+
     machine_names = ["bak", "log", "ca", "db", "web", "client"]
     servers = ["bak", "log", "ca", "db", "web"]
     clients = ["client"]
