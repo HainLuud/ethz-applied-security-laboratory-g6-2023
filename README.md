@@ -46,7 +46,7 @@ Access the Web Server from the client virtual machine at <https://imovies.ch>.
 Run the project in local containers using:
 
 ```bash
-docker compose up --build --d
+docker compose up --build -d
 ```
 
 This command creates the components as containers using Docker, facilitating rapid debugging.
@@ -75,7 +75,7 @@ Build the OVA packages using:
 make
 ```
 
-The packages are stored in the `package` folder.
+The packages are stored in the `obfuscate/package` directory.
 
 For enhanced reliability, use:
 
@@ -89,7 +89,7 @@ This command cleans up the project before building the OVA packages.
 
 The OVA packages contain Python code compiled using Cython, with a copy of the executables temporarily stored in the `obfuscate` folder.
 
-Build packages containing non-compiled code using:
+Build packages containing non-compiled code into the `package` folder using:
 
 ```bash
 make package
