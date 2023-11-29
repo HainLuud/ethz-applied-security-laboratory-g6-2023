@@ -1,6 +1,6 @@
 '''
 Certificate Authority - Unit tests
-Authors: 
+Authors:
 - Patrick Aldover (paldover@student.ethz.ch)
 - Damiano Amatruda (damatruda@student.ethz.ch)
 - Alessandro Cabodi (acabodi@student.ethz.ch)
@@ -17,13 +17,13 @@ class TestCA(unittest.TestCase):
     app.testing = True
     client = app.test_client()
     passphrase = b'Hello'
-    
+
     @unittest.skip("Local")
     def test_basic(self):
         user = User(32, 'Aldover', 'Patrick Louis', 'paldover@student.ethz.ch')
-        
+
         self.assertEqual(self.ca.get_status(), (1, 0, 2))
-        
+
         self.ca.issue_certificate(user, self.passphrase)
         self.assertEqual(self.ca.get_status(), (2, 0, 3))
 
@@ -45,7 +45,7 @@ class TestCA(unittest.TestCase):
 
         self.ca.issue_certificate(user, self.passphrase)
         self.assertEqual(self.ca.get_status(), (5, 1, 6))
-        
+
         self.ca.revoke_certificate(user.uid, [3, 4], "key_compromise")
         self.assertEqual(self.ca.get_status(), (5, 3, 6))
 
@@ -62,7 +62,7 @@ class TestCA(unittest.TestCase):
     # @unittest.skip("Remote")
     def test_api_advanced(self):
         payload = {'uid': 1, 'lastname': 'Max', 'firstname': 'Mustermann', 'email': 'max.mustermann@student.ethz.ch', 'passphrase': '12345'}
-        
+
         response = self.client.post('/issue_certificate', json=payload)
         self.assertEqual(response.status_code, 200)
 

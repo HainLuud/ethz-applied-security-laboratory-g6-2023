@@ -2,7 +2,7 @@
 
 '''
 Certificate Authority - API
-Authors: 
+Authors:
 - Patrick Aldover (paldover@student.ethz.ch)
 - Damiano Amatruda (damatruda@student.ethz.ch)
 - Alessandro Cabodi (acabodi@student.ethz.ch)
@@ -32,18 +32,18 @@ def issue_certificate():
     try:
         data = request.json
         user = User.from_dict(data)
-        
+
         passphrase = data['passphrase'].encode()
         revoke = data['revoke']
         cert = None
         if data['cert_data']:
             cert = data['cert_data'].encode()
-        
+
         cert = ca.issue_certificate(user, cert, passphrase, revoke)
         cert_b64 = base64.b64encode(cert).decode('utf-8')
 
         return jsonify({"status": "success", "certificate": cert_b64})
-    
+
     except Exception as e:
         app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400
@@ -60,7 +60,7 @@ def renew_admin_certificate():
         ca.renew_admin_certificate(cert, passphrase)
 
         return jsonify({"status": "success", "message": "Successfully renewed admin certificate. Please contact CA to retrieve the certificate."})
-    
+
     except Exception as e:
         app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400
@@ -71,7 +71,7 @@ def user_certificates(uid):
         certificates = ca.user_certificates(uid)
 
         return jsonify({"status": "success", "certificates": certificates})
-    
+
     except Exception as e:
         app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400
@@ -82,7 +82,7 @@ def get_certificate_by_serial_id(uid, serial_id):
         certificate = ca.get_certificate_by_serial_id(uid, serial_id)
 
         return jsonify({"status": "success", "certificate": certificate})
-    
+
     except Exception as e:
         app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400
@@ -94,7 +94,7 @@ def get_crl():
         crl_b64 = base64.b64encode(crl).decode('utf-8')
 
         return jsonify({"status": "success", "crl": crl_b64})
-    
+
     except Exception as e:
         app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400
@@ -106,11 +106,11 @@ def revoke_certificate():
         uid = data['uid']
         serial_id_list = data['serial_id_list']
         reason = data.get('reason', "unspecified")
-        
+
         ca.revoke_certificate(uid, serial_id_list, reason)
-        
+
         return jsonify({"status": "success"})
-    
+
     except Exception as e:
         app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400
@@ -119,9 +119,9 @@ def revoke_certificate():
 def get_ca_status():
     try:
         n_issued, n_revoked, next_serial_id, backup_status = ca.get_status()
-        
+
         return jsonify({"status": "success", "n_issued": n_issued, "n_revoked": n_revoked, "next_serial_id": next_serial_id, "backup_status": backup_status})
-    
+
     except Exception as e:
         app.logger.exception('')
         return jsonify({"status": "error", "message": str(e)}), 400

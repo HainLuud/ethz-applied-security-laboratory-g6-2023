@@ -94,7 +94,7 @@ Access the Web Server from the client virtual machine at <https://imovies.ch>.
 
 ## Illustration
 ### User
-On Firefox, navigate to `https://imovies.ch`. You will see the following: 
+On Firefox, navigate to `https://imovies.ch`. You will see the following:
 ![](images/client_1.png)
 Simply Click on `Advanced > Accept the Risk and Continue`.
 ![](images/client_2.png)
@@ -157,7 +157,7 @@ You will see the following if a certificate is revoked.
 Before navigating to `https://imovies.ch`, add the admin certificate (located in the Desktop folder) to Firefox as shown before. The CA admin can only log in via this certificate. Afterwards, when visiting   `https://imovies.ch` you will see the following message.
 ![](images/admin_1.png)
 
-The `Profile` page looks slightly different for the CA admin. The CA admin can only renew its certificate by giving a passphrase for the new certificate. WARNING: The newly generated certificated cannot be downloaded from the browser due to security reasons. Once you renew the certificate, you will be logged out of the admin account. The new certificate can only be exchanged out-of-band with the system admins. 
+The `Profile` page looks slightly different for the CA admin. The CA admin can only renew its certificate by giving a passphrase for the new certificate. WARNING: The newly generated certificated cannot be downloaded from the browser due to security reasons. Once you renew the certificate, you will be logged out of the admin account. The new certificate can only be exchanged out-of-band with the system admins.
 ![](images/admin_2.png)
 
 The `Administration` page shows a dedicated administration panel, where a CA admin can

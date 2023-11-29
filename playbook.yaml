@@ -41,7 +41,7 @@
         - { ip: "{{ hostvars['ca']['ansible_enp0s8']['ipv4']['address'] }}", alias: ca.imovies.ch }
         - { ip: "{{ hostvars['log']['ansible_enp0s8']['ipv4']['address'] }}", alias: log.imovies.ch }
         - { ip: "{{ hostvars['bak']['ansible_enp0s8']['ipv4']['address'] }}", alias: bak.imovies.ch }
-    
+
     - name: Enable firewall and set default deny policy
       community.general.ufw:
         state: enabled

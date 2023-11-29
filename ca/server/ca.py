@@ -1,6 +1,6 @@
 '''
 Certificate Authority
-Authors: 
+Authors:
 - Patrick Aldover (paldover@student.ethz.ch)
 - Damiano Amatruda (damatruda@student.ethz.ch)
 - Alessandro Cabodi (acabodi@student.ethz.ch)
@@ -19,7 +19,7 @@ from cryptography.hazmat.backends import default_backend
 import datetime
 from os import urandom, path, makedirs, listdir, system
 import pydash
-from OpenSSL.crypto import PKCS12, FILETYPE_PEM, load_certificate, load_privatekey 
+from OpenSSL.crypto import PKCS12, FILETYPE_PEM, load_certificate, load_privatekey
 
 # public constants
 PEM = Encoding.PEM
@@ -64,33 +64,33 @@ class CA:
         self.private_key_password = urandom(64)
         self.read_cert()
         self.create_crl()
-        
+
     '''
     Creates directories on startup in case they do not exist.
     '''
     def create_directories(self):
         directories = ['./data', './data/ca', './data/clients', './data/clients/admin']
         for directory in directories:
-            if not path.exists(directory): 
-                makedirs(directory) 
+            if not path.exists(directory):
+                makedirs(directory)
 
     '''
     Returns the initial serial id.
     '''
     def get_initial_serial_id(self):
         if not path.exists(self.serial_id_path):
-            return 1 
+            return 1
         else:
             serial_id = self.load(self.serial_id_path, 'r')
             return int(serial_id)
-    
+
     '''
     Updates serial id.
     '''
     def update_serial_id(self):
         self.serial_id += 1
         self.store(self.serial_id_path, 'w+', str(self.serial_id))
-    
+
     '''
     Generates a new key pair for the CA.
     '''
@@ -101,19 +101,19 @@ class CA:
         encrypted_pem_private_key = private_key.private_bytes(encoding=PEM, format=PKCS8,
                                                               encryption_algorithm=BestAvailableEncryption(self.private_key_password))
         pem_public_key = private_key.public_key().public_bytes(encoding=PEM, format=SubjectPublicKeyInfo)
-        
+
         self.logger.info("Generated new key pair!")
 
         # write serialised keys to files
         self.store(self.priv_key_path, 'wb+', encrypted_pem_private_key)
-    
+
     '''
     Loads the private key of the CA from the file.
     '''
     def load_encrypted_private_key(self):
         # Read the encrypted private key from the file
         encrypted_pem_private_key = self.load(self.priv_key_path, 'rb')
-        
+
         # Deserialize and decrypt the private key
         private_key = load_pem_private_key(data=encrypted_pem_private_key, password=None, backend=default_backend())
         return private_key
@@ -121,12 +121,12 @@ class CA:
     def read_cert(self):
         self.root_cert_pem = self.load(self.root_certificate_path, 'rb')
         self.root_cert = x509.load_pem_x509_certificate(self.root_cert_pem, default_backend())
-        
+
     '''
     Generates the root certificate.
     '''
     def generate_root_certificate(self):
-        
+
         # Check if the root certificate already exists
         if path.exists(self.root_certificate_path):
             self.logger.debug("Root certificate already exists. Loading it.")
@@ -144,7 +144,7 @@ class CA:
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"iMovies"),
             x509.NameAttribute(NameOID.COMMON_NAME, u"root.imovies.ch"),
         ])
-    
+
         private_key = self.load_encrypted_private_key()
 
         basic_constraints = x509.BasicConstraints(ca=True, path_length=1)
@@ -167,11 +167,11 @@ class CA:
         self.root_cert_pem = self.root_cert.public_bytes(encoding=PEM)
 
         self.logger.debug("Generated new certificate!")
-        
+
         self.store(self.root_certificate_path, 'wb+', self.root_cert_pem)
-            
+
         self.update_serial_id()
-    
+
     '''
     Issues a new certificate for a user.
     ----------
@@ -187,7 +187,7 @@ class CA:
         if not authenticated:
             if user.uid == 'admin' or (cert and not self.verify_certificate(cert=cert, isAdmin=False)):
                 raise Exception("User verification failed.")
-        
+
         # revoke old certificates
         if revoke:
             certs = self.user_certificates(user.uid)
@@ -196,28 +196,28 @@ class CA:
                 if not cert['revoked']:
                     serial_id_list.append(cert['serial_id'])
             self.revoke_certificate(user.uid, serial_id_list, x509.ReasonFlags.affiliation_changed)
-        
+
         self.logger.debug("Generating new client key pair ...")
-        # create user key pair 
+        # create user key pair
         client_private_key = rsa.generate_private_key(public_exponent=self.EXPONENT, key_size=self.BITS, )
 
         pem_client_private_key = client_private_key.private_bytes(encoding=PEM, format=TraditionalOpenSSL,
-                                                                  encryption_algorithm=BestAvailableEncryption(passphrase)) 
+                                                                  encryption_algorithm=BestAvailableEncryption(passphrase))
         self.logger.info("Generated new client key pair!")
         self.logger.debug("Generating new client certificate ...")
-        
+
         subject = x509.Name([
             x509.NameAttribute(NameOID.COUNTRY_NAME, u"CH"),
             x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"Zurich"),
             x509.NameAttribute(NameOID.LOCALITY_NAME, u"Zentrum"),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"iMovies"),
             x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, u"iMovies"),
-            x509.NameAttribute(NameOID.COMMON_NAME, f"{user.uid}.imovies.ch"), 
+            x509.NameAttribute(NameOID.COMMON_NAME, f"{user.uid}.imovies.ch"),
             x509.NameAttribute(NameOID.EMAIL_ADDRESS, user.email),
             x509.NameAttribute(NameOID.SURNAME, user.lastname or ''),
             x509.NameAttribute(NameOID.GIVEN_NAME, user.firstname or ''),
         ])
-        
+
         # generate certificate
         basic_constraints = x509.BasicConstraints(ca=False, path_length=None)
         key_usage = x509.KeyUsage(key_cert_sign=False,
@@ -242,34 +242,34 @@ class CA:
                                         .add_extension(key_usage, critical=False) \
                                         .add_extension(subject_key_id, critical=False) \
                                         .sign(private_key, hashes.SHA256())
-        
+
         cert_pem = cert.public_bytes(PEM)
-        
+
         client_directory = f'/app/data/clients/{user.uid}'
         if path.commonprefix((path.realpath(client_directory), self.SAFE_DIR)) != self.SAFE_DIR or user.uid != path.basename(client_directory):
             raise Exception("Invalid path.")
-        
-        if not path.exists(client_directory): 
+
+        if not path.exists(client_directory):
             makedirs(client_directory)
-        
+
         self.store(f'{client_directory}/{self.serial_id}_cert.crt', "wb+", cert.public_bytes(encoding=PEM))
         self.store(f'{client_directory}/{self.serial_id}_key.key', "wb+", pem_client_private_key)
-        
+
         pkcs12 = PKCS12()
         pkcs12.set_certificate(load_certificate(type=FILETYPE_PEM, buffer=cert_pem))
         pkcs12.set_privatekey(load_privatekey(type=FILETYPE_PEM, buffer=pem_client_private_key, passphrase=passphrase))
         pkcs12.set_ca_certificates([load_certificate(type=FILETYPE_PEM, buffer=self.root_cert_pem)])
         client_cert = pkcs12.export(passphrase=passphrase)
-        
+
         if user.uid == 'admin':
             self.store(f'{client_directory}/{self.serial_id}_cert.p12', "wb+", client_cert)
-        
+
         self.update_serial_id()
-        
+
         self.logger.info("Generated new client certificate ...")
-        
+
         return client_cert
-    
+
     '''
     Returns a list of certificate information of a user.
     ----------
@@ -321,7 +321,7 @@ class CA:
             return certs
         except FileNotFoundError:
             return []
-    
+
     '''
     Returns a certificate of a user based on the serial id.
     ----------
@@ -340,10 +340,10 @@ class CA:
             if path.commonprefix((path.realpath(client_directory), self.SAFE_DIR)) != self.SAFE_DIR or uid != path.basename(client_directory):
                 raise Exception("Invalid path.")
             cert_path = f'{client_directory}/{serial_id}_cert.crt'
-            
+
             cert_pem = self.load(cert_path, 'rb')
             cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
-            
+
             # check if certificate is revoked
             revoked_cert = crl.get_revoked_certificate_by_serial_number(serial_id)
             revoked = isinstance(revoked_cert, x509.RevokedCertificate)
@@ -368,7 +368,7 @@ class CA:
         if path.exists(self.crl_path):
             self.logger.debug("CRL already exists. Loading it.")
             return
-        
+
         t_now = datetime.datetime.utcnow()
         t_update = t_now + datetime.timedelta(hours=24)
 
@@ -379,7 +379,7 @@ class CA:
 
         private_key = self.load_encrypted_private_key()
         crl = builder.sign(private_key=private_key, algorithm=hashes.SHA256())
-        
+
         self.store(self.crl_path, "wb", crl.public_bytes(encoding=PEM))
 
     def get_crl(self):
@@ -410,11 +410,11 @@ class CA:
         crl_builder = x509.CertificateRevocationListBuilder().issuer_name(self.root_cert.subject) \
                                                         .last_update(t_now) \
                                                         .next_update(t_update)
-        
+
         for entry in crl:
             crl_builder = crl_builder.add_revoked_certificate(entry)
 
-        
+
         for serial_id in serial_id_list:
             try:
                 # load user certificate
@@ -430,7 +430,7 @@ class CA:
                     reason_flag = x509.ReasonFlags.unspecified
 
                 revoked = crl.get_revoked_certificate_by_serial_number(serial_id)
-                
+
                 if not isinstance(revoked, x509.RevokedCertificate):
                     # Create a revoked certificate entry
                     revoked_cert = x509.RevokedCertificateBuilder().serial_number(user_cert.serial_number) \
@@ -443,7 +443,7 @@ class CA:
                     raise FileExistsError(f'Certificate with serial id {serial_id} has already been revoked.')
             except FileNotFoundError:
                 raise FileNotFoundError(f'Certificate with serial id {serial_id} does not exist.')
-            # errors should not happen if web server is implemented correctly 
+            # errors should not happen if web server is implemented correctly
         private_key = self.load_encrypted_private_key()
         new_crl = crl_builder.sign(private_key=private_key, algorithm=hashes.SHA256())
 
@@ -462,7 +462,7 @@ class CA:
     def verify_certificate(self, cert: bytes, isAdmin: bool):
         if not cert:
             return False
-         
+
         crl_data = self.load(self.crl_path, "rb")
         crl = x509.load_pem_x509_crl(crl_data)
 
@@ -477,7 +477,7 @@ class CA:
             return False
         if isAdmin and ((commonname != 'admin.imovies.ch') or (email != 'admin@imovies.ch')):
             return False
-        
+
         client_directory = f'/app/data/clients/{uid_commonname}'
         if path.commonprefix((path.realpath(client_directory), self.SAFE_DIR)) != self.SAFE_DIR or uid_commonname != path.basename(client_directory):
             raise Exception("Invalid path.")
@@ -487,17 +487,17 @@ class CA:
 
         print(cert.not_valid_before)
         before = cert.not_valid_before
-        after = cert.not_valid_after 
+        after = cert.not_valid_after
         now = datetime.datetime.now()
         expired = (before > now) or (after < now) or (after < before)
         return not revoked and not expired
-         
+
 
     '''
-    Returns the number of issued certificates, revoked certificates, and the current serial id. 
+    Returns the number of issued certificates, revoked certificates, the current serial id and the status of the backup server.
     '''
     def get_status(self):
-        n_issued = self.serial_id - 1 
+        n_issued = self.serial_id - 1
 
         crl_data = self.load(self.crl_path, "rb")
         crl = x509.load_pem_x509_crl(crl_data)
@@ -507,13 +507,13 @@ class CA:
         backup_status = system(f'ping -c 1 {self.BACKUP_ADDRESS}') == 0
 
         return n_issued, n_revoked, self.serial_id, backup_status
-    
+
     #------------helper methods------------
 
     def store(self, path, mode, content):
         with open(path, mode) as f:
             f.write(content)
-    
+
     def load(self, path, mode):
         with open(path, mode) as f:
             content = f.read()
