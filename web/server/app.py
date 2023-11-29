@@ -128,17 +128,17 @@ def load_user():
 
 @app.errorhandler(400)
 def handle_csrf_error(e):
-    return render_template('error.html', code=400, title='Bad Request', message='Invalid request.'), 400
+    return render_template('error.html', code=400, title='Bad Request', message='Your request is missing required information or is malformed.'), 400
 
 
 @app.errorhandler(403)
 def forbidden(e):
-    return render_template('error.html', code=403, title='Forbidden', message='Permission denied.'), 403
+    return render_template('error.html', code=403, title='Forbidden', message='You do not have permission to access the requested resource.'), 403
 
 
 @app.errorhandler(404)
 def not_found(e):
-    return render_template('error.html', code=404, title='Page Not Found', message='Could not find the requested page.'), 404
+    return render_template('error.html', code=404, title='Page Not Found', message='The page you are looking for could not be found.'), 404
 
 
 @app.errorhandler(500)
