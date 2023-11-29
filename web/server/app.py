@@ -340,6 +340,8 @@ def post_issue(uid):
     if not user:
         abort(404)
 
+    cert_data = session.get('cert_data')
+
     lastname = request.form.get('lastname')
     firstname = request.form.get('firstname')
     email = request.form.get('email')
@@ -364,7 +366,7 @@ def post_issue(uid):
 
     try:
         json = {
-            'cert_data': session.get('cert_data'),
+            'cert_data': cert_data,
             'uid': user.uid,
             'lastname': user.lastname,
             'firstname': user.firstname,
@@ -374,10 +376,29 @@ def post_issue(uid):
         }
         response = requests.post(f'https://{CA_HOST}/issue_certificate', json=json, verify='/run/secrets/ca_root_cert')
         data = response.json()
+
         if data['status'] != 'success':
             raise RuntimeError(data['message'])
-        certificate = base64.b64decode(data['certificate'].encode())
-        return send_file(io.BytesIO(certificate), download_name='cert.p12', mimetype='application/x-pkcs12')
+
+        new_certificate = base64.b64decode(data['certificate'].encode())
+
+        if cert_data:
+            cert = x509.load_pem_x509_certificate(cert_data.encode())
+            serial_id = cert.serial_number
+
+            response = requests.get(f'https://{CA_HOST}/user_certificates/{g.user.uid}/{serial_id}', verify='/run/secrets/ca_root_cert')
+            data = response.json()
+
+            if data['status'] != 'success':
+                raise RuntimeError(data['message'])
+
+            certificate = data['certificate']
+
+            if certificate['revoked']:
+                session.pop('uid', None)
+                session.pop('cert_data', None)
+
+        return send_file(io.BytesIO(new_certificate), download_name='cert.p12', mimetype='application/x-pkcs12')
     except RuntimeError:
         app.logger.exception('')
         abort(500)
@@ -394,6 +415,8 @@ def post_revoke(uid):
     if not user:
         abort(404)
 
+    cert_data = session.get('cert_data')
+
     try:
         serial_id_list = [int(item) for item in request.form.getlist('serial_id_list')]
     except:
@@ -404,6 +427,7 @@ def post_revoke(uid):
 
     try:
         json = {
+            'cert_data': cert_data,
             'uid': user.uid,
             'serial_id_list': serial_id_list,
         }
@@ -412,6 +436,13 @@ def post_revoke(uid):
         if data['status'] != 'success':
             raise RuntimeError(data['message'])
         flash('Certificates revoked.', 'info')
+        if cert_data:
+            cert = x509.load_pem_x509_certificate(cert_data.encode())
+            serial_id = cert.serial_number
+            if serial_id in serial_id_list:
+                session.pop('uid', None)
+                session.pop('cert_data', None)
+                return redirect(url_for('get_login', next=url_for('get_profile', uid=user.uid)))
         return redirect(url_for('get_profile', uid=user.uid))
     except RuntimeError:
         app.logger.exception('')
@@ -426,7 +457,9 @@ def post_renew(uid):
     if not user:
         abort(404)
 
-    if 'cert_data' not in session:
+    cert_data = session.get('cert_data')
+
+    if not cert_data:
         abort(400)
 
     passphrase = request.form.get('passphrase')
@@ -438,7 +471,7 @@ def post_renew(uid):
 
     try:
         json = {
-            'cert_data': session.get('cert_data'),
+            'cert_data': cert_data,
             'passphrase': passphrase,
         }
         response = requests.post(f'https://{CA_HOST}/renew_admin_certificate', json=json, verify='/run/secrets/ca_root_cert')

@@ -106,8 +106,11 @@ def revoke_certificate():
         uid = data['uid']
         serial_id_list = data['serial_id_list']
         reason = data.get('reason', "unspecified")
+        cert = None
+        if data['cert_data']:
+            cert = data['cert_data'].encode()
 
-        ca.revoke_certificate(uid, serial_id_list, reason)
+        ca.revoke_certificate(uid, cert, serial_id_list, reason)
 
         return jsonify({"status": "success"})
 

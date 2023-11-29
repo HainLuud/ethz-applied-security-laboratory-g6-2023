@@ -192,10 +192,10 @@ class CA:
         if revoke:
             certs = self.user_certificates(user.uid)
             serial_id_list = []
-            for cert in certs:
-                if not cert['revoked']:
-                    serial_id_list.append(cert['serial_id'])
-            self.revoke_certificate(user.uid, serial_id_list, x509.ReasonFlags.affiliation_changed)
+            for c in certs:
+                if not c['revoked']:
+                    serial_id_list.append(c['serial_id'])
+            self.revoke_certificate(user.uid, cert, serial_id_list, x509.ReasonFlags.affiliation_changed, authenticated)
 
         self.logger.debug("Generating new client key pair ...")
         # create user key pair
@@ -396,9 +396,13 @@ class CA:
     reason : str
         The reason for revocation.
     '''
-    def revoke_certificate(self, uid : str, serial_id_list : list, reason : str):
+    def revoke_certificate(self, uid : str, cert: bytes | None, serial_id_list : list, reason : str, authenticated=False):
         if not self.get_status()[3]:
             raise Exception("Backup server is not up.")
+
+        if not authenticated:
+            if uid == 'admin' or (cert and not self.verify_certificate(cert=cert, isAdmin=False)):
+                raise Exception("User verification failed.")
 
         # load certificate revocation list
         crl_data = self.load(self.crl_path, "rb")
