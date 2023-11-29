@@ -5,6 +5,17 @@
   roles:
     - role: geerlingguy.docker
   tasks:
+    - name: Copy root CA certificate
+      ansible.builtin.copy:
+        src: ca/secrets/root.imovies.ch.crt
+        dest: /usr/local/share/ca-certificates/root.imovies.ch.crt
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Update CA certificates
+      ansible.builtin.command: update-ca-certificates
+
     - name: Disable Vagrant password authentication
       ansible.builtin.user:
         name: vagrant
@@ -70,14 +81,25 @@
         - { hostname: web, port: '443', proto: tcp }
 
     - name: Create and start services
-      ansible.builtin.shell:
-        cmd: docker compose up --build -d
-        chdir: "/root/{{ inventory_hostname }}"
+      ansible.builtin.command: docker compose up --build -d
+      args:
+        chdir: "/root/{{ inventory_hostname }}/"
 
 - name: Configure Clients
   hosts: clients
   become: true
   tasks:
+    - name: Copy root CA certificate
+      ansible.builtin.copy:
+        src: ca/secrets/root.imovies.ch.crt
+        dest: /usr/local/share/ca-certificates/root.imovies.ch.crt
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Update CA certificates
+      ansible.builtin.command: update-ca-certificates
+
     - name: Disable Vagrant password authentication
       ansible.builtin.user:
         name: vagrant
