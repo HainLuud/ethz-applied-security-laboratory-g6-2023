@@ -1,6 +1,10 @@
 ---
+- name: Gather Facts
+  hosts: all
+
 - name: Configure Servers
   hosts: servers
+  gather_facts: false
   become: true
   roles:
     - role: geerlingguy.docker
@@ -87,6 +91,7 @@
 
 - name: Configure Clients
   hosts: clients
+  gather_facts: false
   become: true
   tasks:
     - name: Copy root CA certificate
