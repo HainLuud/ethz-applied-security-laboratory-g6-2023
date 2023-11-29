@@ -25,13 +25,13 @@ Project of Applied Security Laboratory, ETH Zürich, Prof. David Basin, Fall Sem
 | Machine | Username | Password |
 |---|---|---|
 | client | user | user |
-| client | caadmin | 9bc4c5be88de75a18457c498f16a70f7881ab58ca770c449acd8f3a861e71d7e |
-| client | sysadmin | c6b8ec87a9e5d073926b04d1de191041edbf88ead01b585aa944540fb506557f |
-| web | sysadmin | d1d754db6afb6aba5c4460819a70f616f4aadcf93e2bc8750cb4f057aac7481a |
-| db | sysadmin | 9da452e63f31d93718b9b327e0245d81cd704574b39a22fa3b0c1a0b79c2fc6c |
-| ca | sysadmin | 650f489809a133ffb8714c81a7fdfb311bea40a4bf628f015b72290ef516b73f |
-| log | sysadmin | 47e21d4a0294d12af1e485f6567c05782a00140933d684014e01e6bdfd8c7ae4 |
-| bak | sysadmin | 4448f21ecc9c97757452d4d7bcf4fdc1cb24662b3d474a3ff4d7ba9d5487ac69 |
+| client | caadmin | 2iwk97itccGE5F |
+| client | sysadmin | RLa3MJZvo4ZwDF |
+| web | sysadmin | qZCgxQBVJ6VhL5 |
+| db | sysadmin | AhwQ5wnE48h6ai |
+| ca | sysadmin | BFwhLd847hD9Rv |
+| log | sysadmin | QrA8zRZAnQdKDu |
+| bak | sysadmin | z6PNACqyZh6sfs |
 
 ## CA Credentials
 
