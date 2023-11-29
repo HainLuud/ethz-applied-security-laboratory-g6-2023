@@ -18,7 +18,7 @@
                 </label>
                 <div class="input input-bordered input-sm input-disabled flex">
                   <span class="flex select-none items-center text-gray-500 sm:text-sm">imovies.ch/profile/</span>
-                  <input type="text" id="uid" name="uid" value="{{ user.uid }}" class="block flex-1 border-0 bg-transparent py-1.5 cursor-not-allowed" required disabled>
+                  <input type="text" id="uid" name="uid" value="{{ user.uid }}" maxlength="{{ MAX_UID_LENGTH }}" class="block flex-1 border-0 bg-transparent py-1.5 cursor-not-allowed" required disabled>
                 </div>
               </div>
 
@@ -26,21 +26,21 @@
                 <label for="email" class="label pt-0">
                   <span class="label-text font-medium leading-6">Email address</span>
                 </label>
-                <input type="email" id="email" name="email" value="{{ user.email }}" class="input input-bordered input-sm" required {% if not g.user.is_admin %}disabled{% endif %}>
+                <input type="email" id="email" name="email" value="{{ user.email }}" maxlength="{{ MAX_EMAIL_LENGTH }}" class="input input-bordered input-sm" required {% if not g.user.is_admin %}disabled{% endif %}>
               </div>
 
               <div class="form-control sm:col-span-3">
                 <label for="firstname" class="label pt-0">
                   <span class="label-text font-medium leading-6">First name</span>
                 </label>
-                <input type="text" id="firstname" name="firstname" value="{{ user.firstname }}" class="input input-bordered input-sm" required>
+                <input type="text" id="firstname" name="firstname" value="{{ user.firstname }}" maxlength="{{ MAX_FIRSTNAME_LENGTH }}" class="input input-bordered input-sm" required>
               </div>
 
               <div class="form-control sm:col-span-3">
                 <label for="lastname" class="label pt-0">
                   <span class="label-text font-medium leading-6">Last name</span>
                 </label>
-                <input type="text" id="lastname" name="lastname" value="{{ user.lastname }}" class="input input-bordered input-sm" required>
+                <input type="text" id="lastname" name="lastname" value="{{ user.lastname }}" maxlength="{{ MAX_LASTNAME_LENGTH }}" class="input input-bordered input-sm" required>
               </div>
 
               <div class="form-control col-span-full">
@@ -80,7 +80,7 @@
                 <label for="pwd" class="label pt-0">
                   <span class="label-text font-medium leading-6">New password</span>
                 </label>
-                <input type="password" id="pwd" name="pwd" minlength="{{ MIN_PASSWORD_LENGTH }}" maxlength="{{ MAX_PASSWORD_LENGTH }}" class="input input-bordered input-sm" required>
+                <input type="password" id="pwd" name="pwd" minlength="{{ MIN_PWD_LENGTH }}" maxlength="{{ MAX_PWD_LENGTH }}" class="input input-bordered input-sm" required>
               </div>
             </div>
 

@@ -33,8 +33,13 @@ with open(WEB_CSRF_SECRET_KEY_FILE, 'r') as f:
     WEB_CSRF_SECRET_KEY = f.read().strip()
 CA_HOST = os.getenv('CA_HOST')
 
-MIN_PASSWORD_LENGTH = 14
-MAX_PASSWORD_LENGTH = 72
+MAX_UID_LENGTH = 64
+MAX_LASTNAME_LENGTH = 64
+MAX_FIRSTNAME_LENGTH = 64
+MAX_EMAIL_LENGTH = 64
+MIN_PWD_LENGTH = 14
+MAX_PWD_LENGTH = 72
+MAX_PWD_HASH_LENGTH = 64
 MIN_PASSPHRASE_LENGTH = 14
 MAX_PASSPHRASE_LENGTH = 32
 
@@ -57,11 +62,11 @@ class User(db.Model):
     __tablename__ = 'users'
     __table_args__ = {'mysql_engine': 'MyISAM'}
 
-    uid = db.Column(db.String(64), primary_key=True)
-    lastname = db.Column(db.String(64), nullable=False)
-    firstname = db.Column(db.String(64), nullable=False)
-    email = db.Column(db.String(64), nullable=False)
-    pwd = db.Column(db.String(64), nullable=False)
+    uid = db.Column(db.String(MAX_UID_LENGTH), primary_key=True)
+    lastname = db.Column(db.String(MAX_LASTNAME_LENGTH), nullable=False)
+    firstname = db.Column(db.String(MAX_FIRSTNAME_LENGTH), nullable=False)
+    email = db.Column(db.String(MAX_EMAIL_LENGTH), nullable=False)
+    pwd = db.Column(db.String(MAX_PWD_HASH_LENGTH), nullable=False)
 
     @property
     def is_admin(self) -> bool:
@@ -274,9 +279,17 @@ def get_profile(uid):
         certificates = None
 
     return render_template(
-        'profile.html', MIN_PASSWORD_LENGTH=MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH=MAX_PASSWORD_LENGTH,
-        MIN_PASSPHRASE_LENGTH=MIN_PASSPHRASE_LENGTH, MAX_PASSPHRASE_LENGTH=MAX_PASSPHRASE_LENGTH, user=user,
-        certificates=certificates
+        'profile.html',
+        MAX_UID_LENGTH=MAX_UID_LENGTH,
+        MAX_LASTNAME_LENGTH=MAX_LASTNAME_LENGTH,
+        MAX_FIRSTNAME_LENGTH=MAX_FIRSTNAME_LENGTH,
+        MAX_EMAIL_LENGTH=MAX_EMAIL_LENGTH,
+        MIN_PWD_LENGTH=MIN_PWD_LENGTH,
+        MAX_PWD_LENGTH=MAX_PWD_LENGTH,
+        MIN_PASSPHRASE_LENGTH=MIN_PASSPHRASE_LENGTH,
+        MAX_PASSPHRASE_LENGTH=MAX_PASSPHRASE_LENGTH,
+        user=user,
+        certificates=certificates,
     )
 
 
@@ -293,7 +306,9 @@ def post_change_password(uid):
 
     pwd = request.form.get('pwd')
 
-    if not pwd or not (MIN_PASSWORD_LENGTH <= len(pwd) <= MAX_PASSWORD_LENGTH):
+    is_valid_pwd = pwd and MIN_PWD_LENGTH <= len(pwd) <= MAX_PWD_LENGTH
+
+    if not is_valid_pwd:
         abort(400)
 
     if not g.user.is_admin:
@@ -330,10 +345,12 @@ def post_issue(uid):
     email = request.form.get('email')
     passphrase = request.form.get('passphrase')
 
-    if (
-        not lastname or not firstname or (g.user.is_admin and not email) or not passphrase or
-        not (MIN_PASSPHRASE_LENGTH <= len(passphrase) <= MAX_PASSPHRASE_LENGTH)
-    ):
+    is_valid_lastname = lastname and len(lastname) <= MAX_LASTNAME_LENGTH
+    is_valid_firstname = firstname and len(firstname) <= MAX_FIRSTNAME_LENGTH
+    is_valid_email = not g.user.is_admin or (email and len(email) <= MAX_EMAIL_LENGTH)
+    is_valid_passphrase = passphrase and MIN_PASSPHRASE_LENGTH <= len(passphrase) <= MAX_PASSPHRASE_LENGTH
+
+    if not is_valid_lastname or not is_valid_firstname or not is_valid_email or not is_valid_passphrase:
         abort(400)
 
     user.lastname = lastname
@@ -414,7 +431,9 @@ def post_renew(uid):
 
     passphrase = request.form.get('passphrase')
 
-    if not passphrase or not (MIN_PASSPHRASE_LENGTH <= len(passphrase) <= MAX_PASSPHRASE_LENGTH):
+    is_valid_passphrase = passphrase and MIN_PASSPHRASE_LENGTH <= len(passphrase) <= MAX_PASSPHRASE_LENGTH
+
+    if not is_valid_passphrase:
         abort(400)
 
     try:
