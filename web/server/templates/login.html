@@ -13,13 +13,13 @@
             <label for="uid" class="label pt-0">
               <span class="label-text font-medium leading-6">User ID</span>
             </label>
-            <input type="text" id="uid" name="uid" class="input input-bordered input-sm" required>
+            <input type="text" id="uid" name="uid" autocomplete="username" class="input input-bordered input-sm" required>
           </div>
           <div class="form-control">
             <label for="pwd" class="label pt-0">
               <span class="label-text font-medium leading-6">Password</span>
             </label>
-            <input type="password" id="pwd" name="pwd" class="input input-bordered input-sm" required>
+            <input type="password" id="pwd" name="pwd" autocomplete="current-password" class="input input-bordered input-sm" required>
           </div>
           <div class="form-control">
             <input type="hidden" name="next" value="{{ next }}">

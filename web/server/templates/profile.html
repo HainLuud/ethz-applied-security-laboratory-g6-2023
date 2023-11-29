@@ -18,7 +18,7 @@
                 </label>
                 <div class="input input-bordered input-sm input-disabled flex">
                   <span class="flex select-none items-center text-gray-500 sm:text-sm">imovies.ch/profile/</span>
-                  <input type="text" id="uid" name="uid" value="{{ user.uid }}" maxlength="{{ MAX_UID_LENGTH }}" class="block flex-1 border-0 bg-transparent py-1.5 cursor-not-allowed" required disabled>
+                  <input type="text" id="uid" name="uid" autocomplete="username" value="{{ user.uid }}" maxlength="{{ MAX_UID_LENGTH }}" class="block flex-1 border-0 bg-transparent py-1.5 cursor-not-allowed" required disabled>
                 </div>
               </div>
 
@@ -26,28 +26,28 @@
                 <label for="email" class="label pt-0">
                   <span class="label-text font-medium leading-6">Email address</span>
                 </label>
-                <input type="email" id="email" name="email" value="{{ user.email }}" maxlength="{{ MAX_EMAIL_LENGTH }}" class="input input-bordered input-sm" required {% if not g.user.is_admin %}disabled{% endif %}>
+                <input type="email" id="email" name="email" autocomplete="email" value="{{ user.email }}" maxlength="{{ MAX_EMAIL_LENGTH }}" class="input input-bordered input-sm" required {% if not g.user.is_admin %}disabled{% endif %}>
               </div>
 
               <div class="form-control sm:col-span-3">
                 <label for="firstname" class="label pt-0">
                   <span class="label-text font-medium leading-6">First name</span>
                 </label>
-                <input type="text" id="firstname" name="firstname" value="{{ user.firstname }}" maxlength="{{ MAX_FIRSTNAME_LENGTH }}" class="input input-bordered input-sm" required>
+                <input type="text" id="firstname" name="firstname" autocomplete="given-name" value="{{ user.firstname }}" maxlength="{{ MAX_FIRSTNAME_LENGTH }}" class="input input-bordered input-sm" required>
               </div>
 
               <div class="form-control sm:col-span-3">
                 <label for="lastname" class="label pt-0">
                   <span class="label-text font-medium leading-6">Last name</span>
                 </label>
-                <input type="text" id="lastname" name="lastname" value="{{ user.lastname }}" maxlength="{{ MAX_LASTNAME_LENGTH }}" class="input input-bordered input-sm" required>
+                <input type="text" id="lastname" name="lastname" autocomplete="family-name" value="{{ user.lastname }}" maxlength="{{ MAX_LASTNAME_LENGTH }}" class="input input-bordered input-sm" required>
               </div>
 
               <div class="form-control col-span-full">
                 <label for="passphrase" class="label pt-0">
                   <span class="label-text font-medium leading-6">Certificate passphrase</span>
                 </label>
-                <input type="password" id="passphrase" name="passphrase" minlength="{{ MIN_PASSPHRASE_LENGTH }}" maxlength="{{ MAX_PASSPHRASE_LENGTH }}" class="input input-bordered input-sm" required>
+                <input type="password" id="passphrase" name="passphrase" autocomplete="off" minlength="{{ MIN_PASSPHRASE_LENGTH }}" maxlength="{{ MAX_PASSPHRASE_LENGTH }}" class="input input-bordered input-sm" required>
               </div>
             </div>
 
@@ -61,18 +61,20 @@
 
       <div class="card shadow-2xl sm:col-span-5 col-span-full">
         <div class="card-body">
-          <form id="issue-form" method="POST" action="{{ url_for('post_change_password', uid=user.uid)|urlencode }}">
+          <form id="password-form" method="POST" action="{{ url_for('post_change_password', uid=user.uid)|urlencode }}">
             <div class="sm:mx-auto sm:w-full sm:max-w-sm">
               <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight">Change password</h2>
             </div>
 
             <div class="w-full mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-10">
+              <input hidden type="text" name="uid" autocomplete="username" value="{{ user.uid }}" required>
+
               {% if not g.user.is_admin %}
                 <div class="form-control sm:col-span-5">
                   <label for="oldpwd" class="label pt-0">
                     <span class="label-text font-medium leading-6">Old password</span>
                   </label>
-                  <input type="password" id="oldpwd" name="oldpwd" class="input input-bordered input-sm" required>
+                  <input type="password" id="oldpwd" name="oldpwd" autocomplete="current-password" class="input input-bordered input-sm" required>
                 </div>
               {% endif %}
 
@@ -80,13 +82,13 @@
                 <label for="pwd" class="label pt-0">
                   <span class="label-text font-medium leading-6">New password</span>
                 </label>
-                <input type="password" id="pwd" name="pwd" minlength="{{ MIN_PWD_LENGTH }}" maxlength="{{ MAX_PWD_LENGTH }}" class="input input-bordered input-sm" required>
+                <input type="password" id="pwd" name="pwd" autocomplete="new-password" minlength="{{ MIN_PWD_LENGTH }}" maxlength="{{ MAX_PWD_LENGTH }}" class="input input-bordered input-sm" required>
               </div>
             </div>
 
             <div class="mt-6 flex items-center justify-end gap-x-6">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button id="issue-submit" class="btn btn-primary btn-sm">Save</button>
+              <button id="password-submit" class="btn btn-primary btn-sm">Save</button>
             </div>
           </form>
         </div>
@@ -166,7 +168,7 @@
                 <label for="passphrase" class="label pt-0">
                   <span class="label-text font-medium leading-6">Certificate passphrase</span>
                 </label>
-                <input type="password" id="passphrase" name="passphrase" minlength="{{ MIN_PASSPHRASE_LENGTH }}" maxlength="{{ MAX_PASSPHRASE_LENGTH }}" class="input input-bordered input-sm" required>
+                <input type="password" id="passphrase" name="passphrase" autocomplete="off" minlength="{{ MIN_PASSPHRASE_LENGTH }}" maxlength="{{ MAX_PASSPHRASE_LENGTH }}" class="input input-bordered input-sm" required>
               </div>
             </div>
 
