@@ -180,7 +180,7 @@ class CA:
     passphrase : bytes | None
         The passphrase to export the PKCS12 file.
     '''
-    def issue_certificate(self, user: User, cert: bytes | None, passphrase: bytes | None, revoke=False, authenticated=False):
+    def issue_certificate(self, user, cert, passphrase, revoke=False, authenticated=False):
         if not self.get_status()[3]:
             raise Exception("Backup server is not up.")
 
@@ -232,18 +232,18 @@ class CA:
 
         private_key = self.load_encrypted_private_key()
         subject_key_id = x509.SubjectKeyIdentifier.from_public_key(private_key.public_key())
-        cert = x509.CertificateBuilder().subject_name(subject) \
-                                        .issuer_name(self.root_cert.issuer) \
-                                        .public_key(client_private_key.public_key()) \
-                                        .serial_number(self.serial_id) \
-                                        .not_valid_before(datetime.datetime.utcnow()) \
-                                        .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=365)) \
-                                        .add_extension(basic_constraints, critical=False,) \
-                                        .add_extension(key_usage, critical=False) \
-                                        .add_extension(subject_key_id, critical=False) \
-                                        .sign(private_key, hashes.SHA256())
+        cert1 = x509.CertificateBuilder().subject_name(subject) \
+                                         .issuer_name(self.root_cert.issuer) \
+                                         .public_key(client_private_key.public_key()) \
+                                         .serial_number(self.serial_id) \
+                                         .not_valid_before(datetime.datetime.utcnow()) \
+                                         .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=365)) \
+                                         .add_extension(basic_constraints, critical=False,) \
+                                         .add_extension(key_usage, critical=False) \
+                                         .add_extension(subject_key_id, critical=False) \
+                                         .sign(private_key, hashes.SHA256())
 
-        cert_pem = cert.public_bytes(PEM)
+        cert_pem = cert1.public_bytes(PEM)
 
         client_directory = f'/app/data/clients/{user.uid}'
         if path.commonprefix((path.realpath(client_directory), self.SAFE_DIR)) != self.SAFE_DIR or user.uid != path.basename(client_directory):
@@ -252,7 +252,7 @@ class CA:
         if not path.exists(client_directory):
             makedirs(client_directory)
 
-        self.store(f'{client_directory}/{self.serial_id}_cert.crt', "wb+", cert.public_bytes(encoding=PEM))
+        self.store(f'{client_directory}/{self.serial_id}_cert.crt', "wb+", cert1.public_bytes(encoding=PEM))
         self.store(f'{client_directory}/{self.serial_id}_key.key', "wb+", pem_client_private_key)
 
         pkcs12 = PKCS12()
@@ -276,7 +276,7 @@ class CA:
     uid : str
         The user id.
     '''
-    def user_certificates(self, uid : str):
+    def user_certificates(self, uid):
         try:
             # load certificate revocation list
             crl_data = self.load(self.crl_path, "rb")
@@ -330,7 +330,7 @@ class CA:
     serial_id : int
         The serial id of the certificate
     '''
-    def get_certificate_by_serial_id(self, uid : str, serial_id : int):
+    def get_certificate_by_serial_id(self, uid, serial_id):
         try:
             # load certificate revocation list
             crl_data = self.load(self.crl_path, "rb")
@@ -396,7 +396,7 @@ class CA:
     reason : str
         The reason for revocation.
     '''
-    def revoke_certificate(self, uid : str, cert: bytes | None, serial_id_list : list, reason : str, authenticated=False):
+    def revoke_certificate(self, uid, cert, serial_id_list, reason, authenticated=False):
         if not self.get_status()[3]:
             raise Exception("Backup server is not up.")
 
@@ -453,7 +453,7 @@ class CA:
 
         self.store(self.crl_path, "wb", new_crl.public_bytes(encoding=PEM))
 
-    def renew_admin_certificate(self, cert: bytes, passphrase: bytes | None):
+    def renew_admin_certificate(self, cert, passphrase):
         if not self.get_status()[3]:
             raise Exception("Backup server is not up.")
 
@@ -463,19 +463,19 @@ class CA:
         self.issue_certificate(user=user, cert=cert, passphrase=passphrase, revoke=True, authenticated=True)
 
 
-    def verify_certificate(self, cert: bytes, isAdmin: bool):
+    def verify_certificate(self, cert, isAdmin):
         if not cert:
             return False
 
         crl_data = self.load(self.crl_path, "rb")
         crl = x509.load_pem_x509_crl(crl_data)
 
-        cert = x509.load_pem_x509_certificate(cert, default_backend())
+        cert1 = x509.load_pem_x509_certificate(cert, default_backend())
 
-        commonname = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+        commonname = cert1.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
         uid_commonname = commonname.split('.')[0]
 
-        email = cert.subject.get_attributes_for_oid(NameOID.EMAIL_ADDRESS)[0].value
+        email = cert1.subject.get_attributes_for_oid(NameOID.EMAIL_ADDRESS)[0].value
         uid_email = email.split('@')[0]
         if uid_commonname != uid_email:
             return False
@@ -486,12 +486,12 @@ class CA:
         if path.commonprefix((path.realpath(client_directory), self.SAFE_DIR)) != self.SAFE_DIR or uid_commonname != path.basename(client_directory):
             raise Exception("Invalid path.")
 
-        revoked_cert = crl.get_revoked_certificate_by_serial_number(cert.serial_number)
+        revoked_cert = crl.get_revoked_certificate_by_serial_number(cert1.serial_number)
         revoked = isinstance(revoked_cert, x509.RevokedCertificate)
 
-        print(cert.not_valid_before)
-        before = cert.not_valid_before
-        after = cert.not_valid_after
+        print(cert1.not_valid_before)
+        before = cert1.not_valid_before
+        after = cert1.not_valid_after
         now = datetime.datetime.now()
         expired = (before > now) or (after < now) or (after < before)
         return not revoked and not expired
