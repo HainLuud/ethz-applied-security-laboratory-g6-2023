@@ -1,6 +1,8 @@
 # Project of Applied Security Laboratory
 
-Project of Applied Security Laboratory, ETH Zürich, Prof. David Basin, Fall Semester 2023.
+Project of Applied Security Laboratory, ETH Zürich, Prof. David Basin, Fall Semester 2023. 
+
+The project's goal was to design and implement the IT infrastructure for a fictional company that offers PKI-based services. The system needed to have a CA, a legacy MySQL database, a certificate revocation process, administrator interface, a key backup system, a way for system administrators to do maintenance and a web service for clients. The system also had to comply with multiple security requirements (access control to the IT systems and CA functionality, secrecy and integrity mechanisms for private keys and data). However we also had to plant two backdoors to the system such that when we analyzed another group's system, we had to try and find the planted backdoors and abuse them. For both the creation and security analsis stages of the project, we had to create a written report.
 
 ## Team
 
